@@ -1,0 +1,60 @@
+# Access policy. Deny by default.
+#
+# A call is allowed only when no deny rule matches and one allow rule does.
+# The gateway works out the facts from the directory:
+#   group_tier           standard | restricted | privileged
+#   user_status          active | inactive
+#   department_eligible  yes | no
+#   approval             owner | other | rejected | none | no_owner
+# A rule with no `actors` applies to every actor.
+
+[[rule]]
+id = "read-directory"
+effect = "allow"
+tools = ["lookup_user", "find_groups", "check_membership"]
+actors = ["agent:access-request", "workflow:access-request"]
+reason = "Reading the directory is allowed."
+
+[[rule]]
+id = "privileged-groups-are-for-people"
+effect = "deny"
+tools = ["add_to_group"]
+when = { group_tier = ["privileged"] }
+reason = "Privileged groups are never changed by automation. Hand this to the identity team."
+
+[[rule]]
+id = "inactive-users-get-nothing"
+effect = "deny"
+tools = ["add_to_group"]
+when = { user_status = ["inactive"] }
+reason = "The user's account is inactive."
+
+[[rule]]
+id = "department-must-be-eligible"
+effect = "deny"
+tools = ["add_to_group"]
+when = { department_eligible = ["no"] }
+reason = "The user's department can't join this group."
+
+[[rule]]
+id = "restricted-group-without-an-owner"
+effect = "deny"
+tools = ["add_to_group"]
+when = { approval = ["no_owner"] }
+reason = "This restricted group has no owner to approve the request. Hand this to the identity team."
+
+[[rule]]
+id = "standard-groups"
+effect = "allow"
+tools = ["add_to_group"]
+actors = ["agent:access-request", "workflow:access-request"]
+when = { group_tier = ["standard"] }
+reason = "Standard group, active and eligible user."
+
+[[rule]]
+id = "restricted-groups-with-owner-approval"
+effect = "allow"
+tools = ["add_to_group"]
+actors = ["agent:access-request", "workflow:access-request"]
+when = { group_tier = ["restricted"], approval = ["owner"] }
+reason = "Restricted group, approved by its owner."

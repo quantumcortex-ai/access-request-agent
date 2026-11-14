@@ -76,6 +76,22 @@ class AddToGroupInput(_Input):
     group_id: GroupId
 
 
+class RequestApprovalInput(_Input):
+    user_id: UserId
+    group_id: GroupId
+
+
+class Outcome(StrEnum):
+    """How a request ends. Both arms must end in one of these."""
+
+    GRANTED = "granted"
+    ALREADY_MEMBER = "already_member"
+    DENIED = "denied"  # policy says no, or the owner said no
+    HANDED_OFF = "handed_off"  # a person has to do this one
+    NEEDS_CLARIFICATION = "needs_clarification"  # can't tell which user or group
+    GAVE_UP = "gave_up"  # ran out of steps; never a correct ending
+
+
 class ErrorCode(StrEnum):
     INVALID_INPUT = "invalid_input"
     UNKNOWN_TOOL = "unknown_tool"

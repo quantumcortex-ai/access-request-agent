@@ -23,3 +23,5 @@ QuantumCortex.AI agentic engineering series.
 - `src/access_agent/policy.py` and `policy/rules.toml`: deny-by-default rules.
 - `src/access_agent/directory.py` and `seed.py`: the generated company.
 - `src/access_agent/audit.py`: the append-only log the eval reads.
+- `src/access_agent/workflow.py` and `agent.py`: the two arms (ADR 0002). `approval.py`: the pause for the owner.
+- `src/access_agent/llm.py`: the model client. Tests use `ScriptedModel`, never a live model.

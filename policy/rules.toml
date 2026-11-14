@@ -18,7 +18,7 @@ reason = "Reading the directory is allowed."
 [[rule]]
 id = "privileged-groups-are-for-people"
 effect = "deny"
-tools = ["add_to_group"]
+tools = ["add_to_group", "request_approval"]
 when = { group_tier = ["privileged"] }
 reason = "Privileged groups are never changed by automation. Hand this to the identity team."
 
@@ -39,9 +39,17 @@ reason = "The user's department can't join this group."
 [[rule]]
 id = "restricted-group-without-an-owner"
 effect = "deny"
-tools = ["add_to_group"]
+tools = ["add_to_group", "request_approval"]
 when = { approval = ["no_owner"] }
 reason = "This restricted group has no owner to approve the request. Hand this to the identity team."
+
+[[rule]]
+id = "ask-for-approval"
+effect = "allow"
+tools = ["request_approval"]
+actors = ["agent:access-request", "workflow:access-request"]
+when = { group_tier = ["standard", "restricted"] }
+reason = "Asking the group's owner is allowed."
 
 [[rule]]
 id = "standard-groups"

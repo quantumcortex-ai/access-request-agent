@@ -77,7 +77,8 @@ def _group(row: sqlite3.Row) -> Group:
 
 class Directory:
     def __init__(self, path: str = ":memory:") -> None:
-        self.conn = sqlite3.connect(path)
+        # LangGraph may run a node on a worker thread. Calls are still one at a time.
+        self.conn = sqlite3.connect(path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
 

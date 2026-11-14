@@ -24,4 +24,8 @@ QuantumCortex.AI agentic engineering series.
 - `src/access_agent/directory.py` and `seed.py`: the generated company.
 - `src/access_agent/audit.py`: the append-only log the eval reads.
 - `src/access_agent/workflow.py` and `agent.py`: the two arms (ADR 0002). `approval.py`: the pause for the owner.
+- `src/access_agent/tasks.py` builds `tasks/tasks.jsonl`. Labels come from how each case is built, never from running
+  the gateway. After a change, run `python -m access_agent.tasks` and commit the file.
+- `src/access_agent/eval.py`: runs the set and reports. Dev tasks are for debugging. Never adjust an arm against a
+  test task.
 - `src/access_agent/llm.py`: the model client. Tests use `ScriptedModel`, never a live model.

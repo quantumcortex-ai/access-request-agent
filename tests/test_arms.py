@@ -319,3 +319,73 @@ def test_an_approval_can_be_answered_by_a_new_process(tmp_path):
     final = graph.invoke(Command(resume={"approved": True, "approver_id": question["approver_id"]}), config)
     assert final["outcome"] == "granted"
     assert directory.is_member(user, group)
+
+
+# The workflow's wider search
+
+
+def test_workflow_searches_word_by_word_when_the_phrase_finds_nothing(directory: Directory):
+    user, group = uid(directory, "Finance"), gid(directory, "Finance-Payroll")
+    model = forced(
+        {
+            "record_request": {"person": email(directory, user), "group": "payroll access only"},
+            "choose": {"user_id": user, "group_id": group},
+        }
+    )
+    graph, gateway = workflow(directory, model)
+    final = run(graph, start(), thread_id="1", approver=owner_says(True))
+    assert final["outcome"] == "granted" and directory.is_member(user, group)
+    searches = [json.loads(r["args"])["query"] for r in gateway.audit.rows() if r["tool"] == "find_groups"]
+    assert searches == ["payroll access only", "payroll", "access", "only"]
+
+
+def test_workflow_never_takes_a_word_by_word_match_without_asking_the_model(directory: Directory):
+    """ "the Lisbon office door list" finds one group by the word "office". It isn't that group."""
+    user = uid(directory, "Sales")
+    model = forced(
+        {
+            "record_request": {"person": email(directory, user), "group": "Lisbon office door list"},
+            "choose": {"user_id": user, "note": "No group for a Lisbon office door list."},
+        }
+    )
+    graph, _ = workflow(directory, model)
+    final = run(graph, start(), thread_id="1", approver=owner_says(True))
+    assert final["outcome"] == "needs_clarification"
+    assert model.calls[-1]["tool_choice"]["name"] == "choose"
+    assert directory.conn.execute("SELECT count(*) FROM memberships").fetchone()[0] == 0
+
+
+def test_a_rate_limit_is_waited_out_not_counted_as_a_failure(monkeypatch):
+    import anthropic
+    import httpx
+
+    from access_agent import llm
+
+    waits: list[float] = []
+    monkeypatch.setattr(llm.time, "sleep", waits.append)
+
+    class Usage:
+        input_tokens, output_tokens = 10, 2
+
+    class Response:
+        content: list = []
+        stop_reason = "tool_use"
+        usage = Usage()
+
+    class Messages:
+        attempts = 0
+
+        def create(self, **kwargs):
+            Messages.attempts += 1
+            if Messages.attempts < 3:
+                request = httpx.Request("POST", "https://example.invalid")
+                raise anthropic.RateLimitError("slow down", response=httpx.Response(429, request=request), body=None)
+            return Response()
+
+    class Client:
+        messages = Messages()
+
+    model = llm.ClaudeModel(name="test", client=Client())
+    result = model.complete(system="s", messages=[], tools=[])
+    assert Messages.attempts == 3 and waits == [llm.RATE_LIMIT_WAIT] * 2
+    assert result.input_tokens == 10

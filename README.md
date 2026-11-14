@@ -35,7 +35,11 @@ Level 1 is being built. Levels 2 and 3 aren't started.
 - The agent (`agent.py`): the model picks its own next step, with the same tools.
 - An approval step that pauses the request until the group's owner answers, and survives a restart.
 
-Still to come in level 1: the eval set and the results table.
+- The eval set (`tasks/tasks.jsonl`): 130 requests with the end state a careful person would reach. More than half
+  are hard cases.
+- The eval script (`eval.py`): runs both arms on the set and prints the numbers.
+
+Still to come in level 1: the first scored run and its results table.
 
 ## Try one request
 
@@ -60,6 +64,19 @@ pip install -e ".[dev,foundry]"
 az login
 export FOUNDRY_RESOURCE=<your Foundry resource name>
 ```
+
+## Run the eval
+
+```bash
+python -m access_agent.eval --arm both --split dev          # the 26 dev tasks, for a quick look
+python -m access_agent.eval --arm both --repeats 3          # the 104 test tasks, three times each
+python -m access_agent.eval --report runs/<run id>          # print a finished run's table again
+```
+
+Each run is saved under `runs/`. A run that stops can be continued with `--run-id`. Cost per completed task uses the
+list prices in `tasks/prices.toml`, so change those to what you pay.
+
+A full run on a rate-limited account takes a while: the script waits out each limit and carries on.
 
 ## Run the tests
 

@@ -7,6 +7,49 @@ agent, and measured on the same eval set.
 
 Status: private and in progress. Nothing here is measured yet.
 
+## How it works
+
+A request goes to one of two arms. Both use the same tools, and every tool call passes through one gateway, which
+checks it against the policy and writes an audit row whether the call is allowed or refused.
+
+```mermaid
+flowchart TB
+    R([Access request]) --> W
+    R --> A
+
+    subgraph arms [Two arms]
+        W[Workflow<br/>fixed steps, model called at two set points]
+        A[Agent<br/>model picks each next step]
+    end
+
+    W -- tool call --> V
+    A -- tool call --> V
+
+    subgraph gateway [The gateway]
+        V[Check the input] --> F[Read the facts]
+        F --> P{Does a rule<br/>allow it?}
+        P -- yes --> X[Act]
+        P -- no --> D[Refuse and name the rule]
+        X --> L[Write the audit row]
+        D --> L
+    end
+
+    RULES[/policy/rules.toml<br/>deny by default/] -.-> P
+    F -.-> DIR[(Directory<br/>users, groups, members, approvals)]
+    X -. adds the member .-> DIR
+    L --> AUD[(Audit log<br/>append-only)]
+
+    W -. restricted group .-> AP[Approval step<br/>pauses until the group's owner answers]
+    A -. restricted group .-> AP
+    AP -. records the answer .-> DIR
+
+    AUD --> EV[Eval script<br/>every number comes from here]
+```
+
+- Neither arm can reach the directory except through the gateway.
+- Policy facts are read from the directory. Nothing the model says counts as one.
+- An approval is recorded by the approval step, never by a tool the model can call.
+
 ## What's simulated
 
 The company, its people and its groups are generated. The directory is a local SQLite file, and the approver is

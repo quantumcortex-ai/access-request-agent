@@ -299,7 +299,11 @@ def main() -> None:
         # Every nth task, so a short run still covers each kind of case.
         step = max(1, len(tasks) // args.limit)
         tasks = tasks[::step][: args.limit]
-    model = ClaudeModel()
+    try:
+        model = ClaudeModel()
+    except RuntimeError as exc:
+        # No key and no Foundry resource: say what to set, without a traceback.
+        raise SystemExit(str(exc)) from None
     run_dir = RUNS_DIR / (args.run_id or uuid.uuid4().hex[:8])
     run_dir.mkdir(parents=True, exist_ok=True)
     meta = {"model": model.name, "tasks": len(tasks), "repeats": args.repeats, "arm": args.arm, "split": args.split}

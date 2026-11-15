@@ -92,6 +92,18 @@ class Outcome(StrEnum):
     GAVE_UP = "gave_up"  # ran out of steps; never a correct ending
 
 
+def confidence_of(value: Any) -> int | None:
+    """A model's stated confidence as 0 to 100, or None if it gave nothing usable.
+
+    This is recorded for the eval and never acted on: what a model says about
+    itself isn't a fact.
+    """
+    try:
+        return round(min(100.0, max(0.0, float(value))))
+    except (TypeError, ValueError):
+        return None
+
+
 class ErrorCode(StrEnum):
     INVALID_INPUT = "invalid_input"
     UNKNOWN_TOOL = "unknown_tool"

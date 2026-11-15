@@ -11,12 +11,15 @@ Foundry, and the SDK reports exact token counts for cost per task.
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 FOUNDRY_SCOPE = "https://ai.azure.com/.default"
 MAX_TOKENS = 1024
+RATE_LIMIT_TRIES = 8
+RATE_LIMIT_WAIT = 65  # seconds; the limit is counted per minute
 
 
 @dataclass
@@ -107,7 +110,7 @@ class ClaudeModel:
         }
         if tool_choice is not None:
             kwargs["tool_choice"] = tool_choice
-        response = self.client.messages.create(**kwargs)
+        response = self._create(kwargs)
         content = [block.model_dump(mode="json", exclude_none=True) for block in response.content]
         return Reply(
             content=[b for b in content if b.get("type") in ("text", "tool_use")],
@@ -115,6 +118,23 @@ class ClaudeModel:
             input_tokens=response.usage.input_tokens,
             output_tokens=response.usage.output_tokens,
         )
+
+    def _create(self, kwargs: dict[str, Any]) -> Any:
+        """Call the model, and wait out a rate limit instead of failing the task.
+
+        A limit is about the account, not the task. Without this, a busy minute
+        would show up in the results as a failed task.
+        """
+        import anthropic
+
+        for attempt in range(RATE_LIMIT_TRIES):
+            try:
+                return self.client.messages.create(**kwargs)
+            except anthropic.RateLimitError:
+                if attempt == RATE_LIMIT_TRIES - 1:
+                    raise
+                time.sleep(RATE_LIMIT_WAIT)
+        raise AssertionError("unreachable")
 
 
 class ScriptedModel:

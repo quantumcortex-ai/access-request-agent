@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from .approval import ask_owner
 from .gateway import Gateway
 from .llm import Model
-from .models import GroupId, Outcome, UserId
+from .models import GroupId, Outcome, UserId, confidence_of
 
 ACTOR = "agent:access-request"
 MAX_STEPS = 12
@@ -37,6 +37,10 @@ How to work:
 
 _ID_USER = {"type": "string", "description": "A user ID such as u-00042."}
 _ID_GROUP = {"type": "string", "description": "A group ID such as g-0007."}
+_CONFIDENCE = {
+    "type": "integer",
+    "description": "How sure you are that this is the right ending for the request, from 0 to 100.",
+}
 _PAIR = {
     "type": "object",
     "properties": {"user_id": _ID_USER, "group_id": _ID_GROUP},
@@ -75,8 +79,9 @@ TOOLS: list[dict[str, Any]] = [
                 "user_id": _ID_USER,
                 "group_id": _ID_GROUP,
                 "note": {"type": "string", "description": "One sentence for the person who asked."},
+                "confidence": _CONFIDENCE,
             },
-            "required": ["outcome"],
+            "required": ["outcome", "confidence"],
         },
     },
 ]
@@ -91,6 +96,8 @@ class FinishInput(BaseModel):
     user_id: UserId | None = None
     group_id: GroupId | None = None
     note: str = ""
+    # Recorded, never acted on, so a missing or odd value doesn't fail the call.
+    confidence: Any = None
 
 
 class AgentState(TypedDict, total=False):
@@ -104,6 +111,7 @@ class AgentState(TypedDict, total=False):
     user_id: str | None
     group_id: str | None
     note: str
+    confidence: int | None
     input_tokens: int
     output_tokens: int
     model_calls: int
@@ -159,6 +167,7 @@ def build_agent(gateway: Gateway, model: Model, checkpointer: Any = None, max_st
                     "user_id": done.user_id,
                     "group_id": done.group_id,
                     "note": done.note,
+                    "confidence": confidence_of(done.confidence),
                 }
                 continue
             result = gateway.call(name, args, task_id=state["task_id"])

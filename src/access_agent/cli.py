@@ -37,7 +37,11 @@ def main() -> None:
     seed(directory)
     arm = agent if args.arm == "agent" else workflow
     gateway = Gateway(directory, actor=arm.ACTOR, run_id=uuid.uuid4().hex[:8])
-    model = ClaudeModel()
+    try:
+        model = ClaudeModel()
+    except RuntimeError as exc:
+        # No key and no Foundry resource: say what to set, without a traceback.
+        raise SystemExit(str(exc)) from None
     build = agent.build_agent if args.arm == "agent" else workflow.build_workflow
     graph = build(gateway, model, InMemorySaver())
     approver = ask_on_terminal if args.approve == "ask" else owner_says(args.approve == "yes")

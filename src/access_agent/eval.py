@@ -37,6 +37,8 @@ PRICES_FILE = Path(__file__).resolve().parents[2] / "tasks" / "prices.toml"
 ARMS = {"workflow": (workflow.ACTOR, workflow.build_workflow), "agent": (agent.ACTOR, agent.build_agent)}
 # A call the policy stopped was still a well-formed call, so it counts as a success.
 GOOD_CALLS = {"ok", "policy_denied"}
+# Fixed before any scored run: the confidence levels the report checks. Nothing acts on them.
+CONFIDENCE_LEVELS = (70, 80, 90)
 
 
 def prepare(task: Task) -> Directory:
@@ -90,6 +92,7 @@ def run_one(arm: str, task: Task, repeat: int, model: Model, run_id: str) -> dic
         record |= {
             "outcome": final.get("outcome"),
             "note": final.get("note", ""),
+            "confidence": final.get("confidence"),
             "model_calls": final.get("model_calls", 0),
             "input_tokens": final.get("input_tokens", 0),
             "output_tokens": final.get("output_tokens", 0),
@@ -100,8 +103,30 @@ def run_one(arm: str, task: Task, repeat: int, model: Model, run_id: str) -> dic
     record["grants"] = grants
     record["wrong_grants"] = [g for g in grants if g not in task.expect_grants]
     record["completed"] = record["outcome"] in task.expect_outcomes and sorted(grants) == sorted(task.expect_grants)
-    record["calls"] = [[row["tool"], row["outcome"]] for row in gateway.audit.rows()]
+    rows = gateway.audit.rows()
+    record["calls"] = [[row["tool"], row["outcome"]] for row in rows]
+    record["lookups"] = [[row["tool"], row["matches"]] for row in rows if row["matches"] is not None]
     return record
+
+
+def _flagged(rows: list[dict[str, Any]]) -> list[int]:
+    """Of these runs: how many, how many missed, how many made a wrong grant."""
+    return [len(rows), sum(not r["completed"] for r in rows), sum(bool(r["wrong_grants"]) for r in rows)]
+
+
+def signals(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Would a confidence level, or a lookup with several matches, have flagged the runs that went wrong?"""
+    stated = [r for r in rows if r.get("confidence") is not None]
+    done = [r["confidence"] for r in stated if r["completed"]]
+    missed = [r["confidence"] for r in stated if not r["completed"]]
+    return {
+        "stated": len(stated),
+        "mean_completed": sum(done) / len(done) if done else None,
+        "mean_missed": sum(missed) / len(missed) if missed else None,
+        "below": {str(level): _flagged([r for r in stated if r["confidence"] < level]) for level in CONFIDENCE_LEVELS},
+        "several_matches": _flagged([r for r in rows if any(n > 1 for _, n in r.get("lookups", []))]),
+        "all": _flagged(rows),
+    }
 
 
 def wilson(successes: int, total: int, z: float = 1.96) -> tuple[float, float]:
@@ -153,6 +178,7 @@ def summarize(records: list[dict[str, Any]], model_name: str) -> dict[str, Any]:
             "cost": cost,
             "cost_per_completed": (cost / len(done)) if cost is not None and done else None,
             "by_category": {k: v for k, v in sorted(by_category.items())},
+            "signals": signals(rows),
         }
     return summary
 
@@ -186,6 +212,30 @@ def render(summary: dict[str, Any], model_name: str) -> str:
             done, total = summary[a]["by_category"].get(category, [0, 0])
             cells.append(f"{done} of {total}")
         lines.append(f"| {category} | " + " | ".join(cells) + " |")
+
+    def mean(value: float | None) -> str:
+        return "n/a" if value is None else f"{value:.0f}"
+
+    def flagged(s: dict[str, Any], counts: list[int]) -> str:
+        _, misses, wrong_runs = s["signals"]["all"]
+        return f"{counts[0]} runs: {counts[1]} of {misses} misses, {counts[2]} of {wrong_runs} wrong-grant runs"
+
+    lines += [
+        "",
+        "Recorded, not acted on. Would each signal have flagged the runs that went wrong?",
+        "",
+        "| Signal | " + " | ".join(arms) + " |",
+        "|---|" + "---|" * len(arms),
+    ]
+    row("Runs with a stated confidence", lambda s: f"{s['signals']['stated']} of {s['runs']}")
+    row(
+        "Mean confidence, completed / missed",
+        lambda s: f"{mean(s['signals']['mean_completed'])} / {mean(s['signals']['mean_missed'])}",
+    )
+    for level in CONFIDENCE_LEVELS:
+        row(f"Confidence below {level}", lambda s, level=level: flagged(s, s["signals"]["below"][str(level)]))
+    row("A lookup returned more than one match", lambda s: flagged(s, s["signals"]["several_matches"]))
+
     wrong = sum(summary[a]["wrong_grants"] for a in arms)
     lines += ["", "Pass: zero wrong grants." if wrong == 0 else f"FAIL: {wrong} wrong grant(s)."]
     return "\n".join(lines)

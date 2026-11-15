@@ -389,3 +389,34 @@ def test_a_rate_limit_is_waited_out_not_counted_as_a_failure(monkeypatch):
     result = model.complete(system="s", messages=[], tools=[])
     assert Messages.attempts == 3 and waits == [llm.RATE_LIMIT_WAIT] * 2
     assert result.input_tokens == 10
+
+
+# Confidence and lookup counts: recorded, never acted on
+
+
+def test_agent_confidence_is_recorded_and_a_bad_value_does_not_fail_the_call(directory: Directory):
+    graph, _ = agent(directory, script([tool_use("finish", {"outcome": "denied", "confidence": 85}, "c1")]))
+    assert run(graph, start(), thread_id="1", approver=owner_says(True))["confidence"] == 85
+
+    for given, kept in (("very sure", None), (250, 100), (None, None)):
+        graph, _ = agent(directory, script([tool_use("finish", {"outcome": "denied", "confidence": given}, "c1")]))
+        final = run(graph, start(), thread_id="1", approver=owner_says(True))
+        assert final["outcome"] == "denied" and final["steps"] == 1 and final["confidence"] == kept
+
+
+def test_workflow_keeps_the_lowest_confidence_the_model_stated(directory: Directory):
+    shared = directory.conn.execute("SELECT name FROM users GROUP BY name HAVING count(*) > 1").fetchone()["name"]
+    picked = directory.conn.execute("SELECT id FROM users WHERE name = ? ORDER BY id", (shared,)).fetchone()["id"]
+    group = gid(directory, "All-Staff-News")
+    model = forced(
+        {
+            "record_request": {"person": shared, "group": "All-Staff-News", "confidence": 95},
+            "choose": {"user_id": picked, "group_id": group, "confidence": 60},
+        }
+    )
+    graph, gateway = workflow(directory, model)
+    final = run(graph, {"task_id": "t", "request": "r"}, thread_id="1", approver=owner_says(True))
+    assert final["outcome"] == "granted" and final["confidence"] == 60
+    # The audit row for the name search says two people matched.
+    lookups = {row["tool"]: row["matches"] for row in gateway.audit.rows() if row["matches"] is not None}
+    assert lookups == {"lookup_user": 2, "find_groups": 1}

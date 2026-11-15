@@ -75,6 +75,8 @@ class Gateway:
         result = self._run(tool, args)
         failure = result.error.value if result.error else "error"
         outcome = "ok" if result.ok else failure
+        # How many records a lookup returned: more than one means the caller had to choose.
+        found = (result.data or {}).get("users", (result.data or {}).get("groups"))
         self.audit.write(
             run_id=self.run_id,
             task_id=task_id,
@@ -84,6 +86,7 @@ class Gateway:
             outcome=outcome,
             rule_id=result.rule_id,
             reason=result.reason,
+            matches=len(found) if isinstance(found, list) else None,
         )
         return result
 

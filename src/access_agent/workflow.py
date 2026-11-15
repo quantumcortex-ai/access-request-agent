@@ -15,11 +15,16 @@ from langgraph.graph import END, START, StateGraph
 from .approval import ask_owner
 from .gateway import Gateway
 from .llm import Model
-from .models import Outcome
+from .models import Outcome, confidence_of
 
 ACTOR = "workflow:access-request"
 WORD_MIN = 4  # shorter words ("the", "to") match too much to search on
 HANDOFF_RULES = {"privileged-groups-are-for-people", "restricted-group-without-an-owner"}
+
+_CONFIDENCE = {
+    "type": "integer",
+    "description": "How sure you are that this is right for the request, from 0 to 100.",
+}
 
 EXTRACT_SYSTEM = (
     "You read IT access requests. Record who needs access and which group they need. "
@@ -37,8 +42,9 @@ EXTRACT_TOOL = {
                 "no department, title or brackets.",
             },
             "group": {"type": "string", "description": "Two or three words naming the group or resource."},
+            "confidence": _CONFIDENCE,
         },
-        "required": ["person", "group"],
+        "required": ["person", "group", "confidence"],
     },
 }
 CHOOSE_SYSTEM = (
@@ -56,7 +62,9 @@ CHOOSE_TOOL = {
             "user_id": {"type": "string", "description": "The matching user's ID, if the request settles it."},
             "group_id": {"type": "string", "description": "The matching group's ID, if the request settles it."},
             "note": {"type": "string", "description": "One sentence on what's missing, if anything."},
+            "confidence": _CONFIDENCE,
         },
+        "required": ["confidence"],
     },
 }
 
@@ -75,9 +83,15 @@ class WorkflowState(TypedDict, total=False):
     approved: bool
     outcome: str
     note: str
+    confidence: int | None  # the lowest the model reported; recorded, never acted on
     input_tokens: int
     output_tokens: int
     model_calls: int
+
+
+def _lowest(state: WorkflowState, value: Any) -> dict[str, int | None]:
+    stated = [c for c in (state.get("confidence"), confidence_of(value)) if c is not None]
+    return {"confidence": min(stated) if stated else None}
 
 
 def _usage(state: WorkflowState, reply: Any) -> dict[str, int]:
@@ -102,9 +116,9 @@ def build_workflow(gateway: Gateway, model: Model, checkpointer: Any = None) -> 
             tools=[EXTRACT_TOOL],
             tool_choice={"type": "tool", "name": "record_request"},
         )
-        update: dict[str, Any] = _usage(state, reply)
         uses = reply.tool_uses()
         fields = uses[0]["input"] if uses else {}
+        update: dict[str, Any] = _usage(state, reply) | _lowest(state, fields.get("confidence"))
         person, group = str(fields.get("person", "")).strip(), str(fields.get("group", "")).strip()
         if not person or not group:
             return update | _end(Outcome.NEEDS_CLARIFICATION, "The request doesn't name a person and a group.")
@@ -150,9 +164,9 @@ def build_workflow(gateway: Gateway, model: Model, checkpointer: Any = None) -> 
             tools=[CHOOSE_TOOL],
             tool_choice={"type": "tool", "name": "choose"},
         )
-        update: dict[str, Any] = _usage(state, reply)
         uses = reply.tool_uses()
         picked = uses[0]["input"] if uses else {}
+        update: dict[str, Any] = _usage(state, reply) | _lowest(state, picked.get("confidence"))
         user_id, group_id = picked.get("user_id"), picked.get("group_id")
         # The model may only pick from what the directory returned.
         if user_id not in {u["id"] for u in users} or group_id not in {g["id"] for g in groups}:

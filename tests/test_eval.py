@@ -173,3 +173,22 @@ def test_summary_counts_calls_grants_and_cost():
     text = ev.render({"agent": agent}, "claude-haiku-5-5")
     assert "FAIL: 1 wrong grant(s)." in text and "50.0%" in text
     assert ev.summarize(records, "a-model-with-no-price")["agent"]["cost"] is None
+
+
+def test_signals_say_what_a_confidence_level_or_several_matches_would_have_flagged():
+    base = {"arm": "agent", "category": "c", "hard": False, "calls": [], "outcome": "granted"}
+    one, two = [["lookup_user", 1]], [["lookup_user", 1], ["find_groups", 2]]
+    records = [
+        base | {"completed": True, "wrong_grants": [], "confidence": 95, "lookups": one},
+        base | {"completed": True, "wrong_grants": [], "confidence": 75, "lookups": two},
+        base | {"completed": False, "wrong_grants": [["u", "g"]], "confidence": 65, "lookups": two},
+        base | {"completed": False, "wrong_grants": [], "confidence": None, "lookups": one},
+    ]
+    found = ev.signals(records)
+    assert found["stated"] == 3 and found["mean_completed"] == 85 and found["mean_missed"] == 65
+    # [runs flagged, misses among them, wrong-grant runs among them]
+    assert found["below"] == {"70": [1, 1, 1], "80": [2, 1, 1], "90": [2, 1, 1]}
+    assert found["several_matches"] == [2, 1, 1] and found["all"] == [4, 2, 1]
+    text = ev.render(ev.summarize(records, "claude-haiku-5-5"), "claude-haiku-5-5")
+    assert "| Confidence below 70 | 1 runs: 1 of 2 misses, 1 of 1 wrong-grant runs |" in text
+    assert "| A lookup returned more than one match | 2 runs: 1 of 2 misses, 1 of 1 wrong-grant runs |" in text

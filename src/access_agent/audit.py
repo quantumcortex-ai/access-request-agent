@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS audit (
     args TEXT NOT NULL,
     outcome TEXT NOT NULL,
     rule_id TEXT,
-    reason TEXT
+    reason TEXT,
+    matches INTEGER
 );
 CREATE TRIGGER IF NOT EXISTS audit_no_update BEFORE UPDATE ON audit
 BEGIN SELECT RAISE(ABORT, 'audit rows cannot be changed'); END;
@@ -47,10 +48,11 @@ class AuditLog:
         outcome: str,
         rule_id: str | None = None,
         reason: str | None = None,
+        matches: int | None = None,
     ) -> int:
         cur = self.conn.execute(
-            "INSERT INTO audit (at, run_id, task_id, actor, tool, args, outcome, rule_id, reason) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO audit (at, run_id, task_id, actor, tool, args, outcome, rule_id, reason, matches) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 datetime.now(UTC).isoformat(timespec="milliseconds"),
                 run_id,
@@ -61,6 +63,7 @@ class AuditLog:
                 outcome,
                 rule_id,
                 reason,
+                matches,
             ),
         )
         self.conn.commit()

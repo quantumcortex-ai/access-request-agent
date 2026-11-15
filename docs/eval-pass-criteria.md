@@ -35,4 +35,6 @@ shows the policy working.
 - That these results confirm any threshold in the series. They show how to measure each number and what this system
   scored.
 - Anything about the 20% tool-use test. Every access request needs tools, so it can't be measured here.
+- That these results carry over to real service-desk requests. Every request here is generated, on a fictional
+  company, and the test tasks come from the same generator as the dev tasks. Real tickets would be messier.
 - That the agent is better. If the workflow wins, we publish that.

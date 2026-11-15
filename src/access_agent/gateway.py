@@ -22,6 +22,7 @@ from .models import (
     FindGroupsInput,
     Group,
     LookupUserInput,
+    RequestApprovalInput,
     Tier,
     ToolResult,
     User,
@@ -33,6 +34,7 @@ TOOL_INPUTS: dict[str, type[BaseModel]] = {
     "find_groups": FindGroupsInput,
     "check_membership": CheckMembershipInput,
     "add_to_group": AddToGroupInput,
+    "request_approval": RequestApprovalInput,
 }
 
 
@@ -65,6 +67,7 @@ class Gateway:
             "find_groups": self._find_groups,
             "check_membership": self._check_membership,
             "add_to_group": self._add_to_group,
+            "request_approval": self._request_approval,
         }
 
     def call(self, tool: str, args: dict[str, Any], *, task_id: str) -> ToolResult:
@@ -152,6 +155,35 @@ class Gateway:
             rule_id=decision.rule_id,
             reason=decision.reason,
             data={"user_id": user.id, "group_id": group.id, "added": not already, "already_member": already},
+        )
+
+    def _request_approval(self, args: RequestApprovalInput) -> ToolResult:
+        """Say whether an approval is needed and who must give it.
+
+        This writes no approval. The approval step asks the owner and records the
+        answer. The approver is always the group's owner, read from the directory:
+        the caller can't name someone else.
+        """
+        missing = self._missing(args.user_id, args.group_id, "request_approval")
+        if missing:
+            return missing
+        user = self.directory.get_user(args.user_id)
+        group = self.directory.get_group(args.group_id)
+        assert user is not None and group is not None  # _missing checked both
+        decision = decide(self.rules, self.actor, "request_approval", self._facts(user, group))
+        if not decision.allowed:
+            return self._denied("request_approval", decision.rule_id, decision.reason)
+        needed = group.tier is Tier.RESTRICTED
+        return ToolResult(
+            ok=True,
+            tool="request_approval",
+            rule_id=decision.rule_id,
+            data={
+                "user_id": user.id,
+                "group_id": group.id,
+                "needed": needed,
+                "approver_id": group.owner_id if needed else None,
+            },
         )
 
     def _missing(self, user_id: str, group_id: str, tool: str) -> ToolResult | None:

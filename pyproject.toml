@@ -3,9 +3,16 @@ name = "access-agent"
 version = "0.1.0"
 description = "One IT access request, built as a workflow and as an agent and measured on one eval set."
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2.9,<3"]
+dependencies = [
+    "pydantic>=2.9,<3",
+    "langgraph>=1.2,<2",
+    "langgraph-checkpoint-sqlite>=3.1,<4",
+    "anthropic>=2.8,<3",
+]
 
 [project.optional-dependencies]
+# Keyless sign-in to Claude on Microsoft Foundry. Not needed with an Anthropic API key.
+foundry = ["azure-identity>=1.25"]
 dev = ["pytest>=8", "ruff>=0.8"]
 
 [build-system]

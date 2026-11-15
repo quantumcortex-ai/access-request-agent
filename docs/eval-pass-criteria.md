@@ -1,7 +1,7 @@
 # What counts as a pass
 
-Draft, written before any model run. The maintainer approves this before the first run, and it doesn't change afterwards
-without a dated note here.
+Approved by the maintainer on 2026-11-15, before any scored run, along with the task labels in `tasks/tasks.jsonl`.
+It doesn't change afterwards without a dated note here.
 
 ## The eval set
 - 130 tasks in `tasks/tasks.jsonl`, 104 of them in the test split. At least 40% are hard: people who share a name, groups whose names differ by a word, a

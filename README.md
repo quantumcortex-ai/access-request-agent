@@ -5,7 +5,42 @@ By QuantumCortex.AI.
 A worked example for our agentic engineering series: one IT access request, built as a fixed workflow and as an
 agent, and measured on the same eval set.
 
-Status: private and in progress. Nothing here is measured yet.
+Status: level 1 is built and measured. Levels 2 and 3 aren't started.
+
+## First results
+
+One run, on 2026-11-15: the 104 test tasks, three times each, with `claude-haiku-5-5`. The pass rule was written
+down before the run: zero wrong grants in both arms. **This run fails it.** The workflow added someone to a group
+the request didn't settle, once in 312 runs.
+
+| | Agent | Workflow |
+|---|---|---|
+| Task completion | 98.7% (97% to 100%), 308 of 312 | 98.7% (97% to 100%), 308 of 312 |
+| Completion, hard tasks | 97.6% (94% to 99%), 164 of 168 | 97.6% (94% to 99%), 164 of 168 |
+| Wrong grants | 0 | 1 |
+| First-try tool-call success | 100%, 1,294 of 1,294 | 100%, 1,408 of 1,408 |
+| Model calls per run | 4.0 | 1.2 |
+| Input tokens | 2,484,736 | 272,242 |
+| Cost per completed task, at list price | $0.0010 | $0.0001 |
+
+Ranges are 95% intervals. The full report and every run's record are in `results/2026-11-15-haiku/`. The run used
+the code at commit `b2d6ca7`.
+
+What it shows:
+
+- Both arms completed the same share of tasks. The agent used about nine times the input tokens to do it.
+- The wrong grant came from the workflow. The request asked for "the Sales one", two groups fit, and on one of
+  three tries the model picked one where it should have asked. The policy allowed the add, because the person was
+  eligible for that group. The gateway checks whether an add is allowed. It can't tell that the request was vague.
+- Every miss was on a request where a lookup returned more than one match. That count comes from code, and it
+  flagged all eight missed runs, among 115 runs in all.
+- The model's own confidence was a weaker signal. The agent stated 80 to 90 on the runs it missed, the same as on
+  the runs it got right.
+- Tool calls were well-formed every time, so on typed tools with this model that number doesn't tell the arms
+  apart.
+
+What it doesn't show: anything about real service-desk requests. Every request here is generated, on a fictional
+company. See "What we won't claim" in `docs/eval-pass-criteria.md`.
 
 ## How it works
 
@@ -63,9 +98,9 @@ Pick how deep you want to go. Each level builds on the one before.
 2. MCP: the same tools, served as an MCP server.
 3. Azure: a Terraform module that deploys it for a few dollars a month.
 
-Level 1 is being built. Levels 2 and 3 aren't started.
+Level 1 is here. Levels 2 and 3 aren't started.
 
-## What's here so far
+## What's in level 1
 
 - A generated company, Larkspur Freight, with the awkward cases built in: people who share a name, groups whose names
   differ by a word, a restricted group with no owner, and inactive accounts.
@@ -81,8 +116,6 @@ Level 1 is being built. Levels 2 and 3 aren't started.
 - The eval set (`tasks/tasks.jsonl`): 130 requests with the end state a careful person would reach. More than half
   are hard cases.
 - The eval script (`eval.py`): runs both arms on the set and prints the numbers.
-
-Still to come in level 1: the first scored run and its results table.
 
 ## Try one request
 
@@ -129,6 +162,6 @@ The tests use a scripted stand-in for the model, so they need no API key.
 pytest -q
 ```
 
-## How we'll measure
+## How we measure
 
-`docs/eval-pass-criteria.md` says what counts as a pass. It's written before the first run.
+`docs/eval-pass-criteria.md` says what counts as a pass. It was written and approved before the first run.

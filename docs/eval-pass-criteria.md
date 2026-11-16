@@ -150,3 +150,7 @@ What we report: the same numbers as before, for each set on its own. The pass ru
 
 What we won't do: change either arm, a rule or a prompt in level 1 because of a held-out result. A miss there is
 reported as a measured limit. Otherwise this set stops being unseen the way the injection test cases did.
+
+What happened: on the test set both models passed. On the held-out set `claude-sonnet-5-5` passed and
+`claude-haiku-5-5` failed: the workflow made six wrong grants, all on two requests that swap the ask. The numbers
+are in the README and the runs are in `results/2026-11-16-b4e5093-*`. Neither arm was changed afterwards.

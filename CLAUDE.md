@@ -28,6 +28,8 @@ QuantumCortex.AI agentic engineering series.
 - `src/access_agent/workflow.py` and `agent.py`: the two arms (ADR 0002). `approval.py`: the pause for the owner.
 - `src/access_agent/tasks.py` builds `tasks/tasks.jsonl`. Labels come from how each case is built, never from running
   the gateway. After a change, run `python -m access_agent.tasks` and commit the file.
+- `tasks/held-out.jsonl`: 40 requests written blind by a separate session. Never tune an arm, a rule or a prompt
+  against it, and never edit a request in it.
 - `tasks/dev-probes.jsonl`: hand-written dev requests for a problem the dev tasks didn't show. Never scored, and
   never a copy of a test task.
 - `src/access_agent/eval.py`: runs the set and reports. Dev tasks are for debugging. Never adjust an arm against a

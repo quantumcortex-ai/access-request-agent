@@ -19,7 +19,8 @@ QuantumCortex.AI agentic engineering series.
 - Decisions are in `docs/adr/`.
 
 ## Layout
-- `src/access_agent/gateway.py`: the one path every tool call takes (ADR 0001).
+- `src/access_agent/gateway.py`: the one path every tool call takes (ADR 0001). It also works out whether the
+  request settled the user and the group (ADR 0003). That fact never comes from the model.
 - `src/access_agent/policy.py` and `policy/rules.toml`: deny-by-default rules.
 - `src/access_agent/directory.py` and `seed.py`: the generated company.
 - `src/access_agent/audit.py`: the append-only log the eval reads.

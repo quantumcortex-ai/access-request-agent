@@ -6,6 +6,8 @@
 #   user_status          active | inactive
 #   department_eligible  yes | no
 #   approval             owner | other | rejected | none | no_owner
+#   match_settled        yes | no    yes when the user and the group were each the only result of a
+#                                    search whose every word appears in the request
 # A rule with no `actors` applies to every actor.
 
 [[rule]]
@@ -14,6 +16,13 @@ effect = "allow"
 tools = ["lookup_user", "find_groups", "check_membership"]
 actors = ["agent:access-request", "workflow:access-request"]
 reason = "Reading the directory is allowed."
+
+[[rule]]
+id = "match-must-be-settled-by-the-request"
+effect = "deny"
+tools = ["add_to_group", "request_approval"]
+when = { match_settled = ["no"] }
+reason = "The request doesn't settle which user or group is meant. Search again using only words from the request, or ask the requester which they mean."
 
 [[rule]]
 id = "privileged-groups-are-for-people"

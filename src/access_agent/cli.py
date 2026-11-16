@@ -42,7 +42,7 @@ def main() -> None:
     directory = Directory()
     seed(directory)
     arm = agent if args.arm == "agent" else workflow
-    gateway = Gateway(directory, actor=arm.ACTOR, run_id=uuid.uuid4().hex[:8])
+    gateway = Gateway(directory, actor=arm.ACTOR, run_id=uuid.uuid4().hex[:8], request=args.request)
     try:
         model = ClaudeModel()
     except RuntimeError as exc:

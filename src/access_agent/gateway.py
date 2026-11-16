@@ -4,6 +4,10 @@ validate the input -> look up the facts -> check policy -> act -> write the audi
 
 The workflow and the agent both call tools through here, so both are held to
 the same rules and measured from the same log.
+
+The gateway also remembers which users and groups the request itself settled:
+each was the only result of a search whose every word appears in the request.
+That is a fact for the policy, worked out here and never taken from the model.
 """
 
 from __future__ import annotations
@@ -28,6 +32,24 @@ from .models import (
     User,
 )
 from .policy import Rule, decide, load_rules
+
+SETTLE_RULE = "match-must-be-settled-by-the-request"
+_EDGE_PUNCTUATION = ".,;:!?()[]{}'\"<>"
+
+
+def grounded(query: str, request: str | None) -> bool:
+    """Does every word of this search appear in the request?
+
+    A search that uses a word the request doesn't contain is the caller's guess,
+    so its result can't settle who or what the request means.
+    """
+    if not request:
+        return False
+    text = request.lower()
+    words = [word.strip(_EDGE_PUNCTUATION) for word in query.lower().split()]
+    words = [word for word in words if word]
+    return bool(words) and all(word in text for word in words)
+
 
 TOOL_INPUTS: dict[str, type[BaseModel]] = {
     "lookup_user": LookupUserInput,
@@ -56,10 +78,16 @@ class Gateway:
         actor: str,
         run_id: str,
         rules: list[Rule] | None = None,
+        request: str | None = None,
     ) -> None:
         self.directory = directory
         self.actor = actor
         self.run_id = run_id
+        # The request this gateway is handling, given by the caller's code, not by the model.
+        # With no request nothing counts as settled.
+        self.request = request
+        self._settled_users: set[str] = set()
+        self._settled_groups: set[str] = set()
         self.rules = rules if rules is not None else load_rules()
         self.audit = AuditLog(directory.conn)
         self._handlers: dict[str, Callable[[Any], ToolResult]] = {
@@ -114,9 +142,18 @@ class Gateway:
         denied = self._check("lookup_user", {})
         if denied:
             return denied
-        users = self.directory.search_users(args.query)
+        users = self.directory.search_users(args.query, args.department)
+        from_request = grounded(args.query, self.request) and (
+            args.department is None or grounded(args.department, self.request)
+        )
+        settled = len(users) == 1 and from_request
+        if settled:
+            self._settled_users.add(users[0].id)
         return ToolResult(
-            ok=True, tool="lookup_user", rule_id="read-directory", data={"users": [_public_user(u) for u in users]}
+            ok=True,
+            tool="lookup_user",
+            rule_id="read-directory",
+            data={"users": [_public_user(u) for u in users], "settled": settled},
         )
 
     def _find_groups(self, args: FindGroupsInput) -> ToolResult:
@@ -124,8 +161,14 @@ class Gateway:
         if denied:
             return denied
         groups = self.directory.search_groups(args.query)
+        settled = len(groups) == 1 and grounded(args.query, self.request)
+        if settled:
+            self._settled_groups.add(groups[0].id)
         return ToolResult(
-            ok=True, tool="find_groups", rule_id="read-directory", data={"groups": [_public_group(g) for g in groups]}
+            ok=True,
+            tool="find_groups",
+            rule_id="read-directory",
+            data={"groups": [_public_group(g) for g in groups], "settled": settled},
         )
 
     def _check_membership(self, args: CheckMembershipInput) -> ToolResult:
@@ -203,7 +246,12 @@ class Gateway:
             "user_status": user.status.value,
             "department_eligible": "yes" if eligible else "no",
             "approval": self._approval(user, group),
+            "match_settled": "yes" if self.settled(user.id, group.id) else "no",
         }
+
+    def settled(self, user_id: str, group_id: str) -> bool:
+        """Did the request itself settle both this user and this group?"""
+        return user_id in self._settled_users and group_id in self._settled_groups
 
     def _approval(self, user: User, group: Group) -> str:
         """Who approved this exact user and group, read from the approvals table."""

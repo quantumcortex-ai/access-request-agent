@@ -67,3 +67,24 @@ Two things changed in how the arms call the model, named here because the first 
 
 Each model runs at its default effort. No refusal fallback is used: a request a model declines counts as a miss.
 Neither arm's prompts, tools or steps changed, and nothing was adjusted against a test task.
+
+### 2026-11-15: the settle rule
+Planned before it ran. After the first run, where every miss came from a request with more than one matching
+record, the policy gained a rule: act only on a user and a group that the request's own words settled
+(`docs/adr/0003-act-only-on-a-match-the-request-settles.md`).
+
+What changed, all of it made and checked on the dev tasks only:
+
+- The gateway works out whether a match is settled, and one deny rule uses it.
+- `lookup_user` takes an optional department. Group search drops punctuation at the edge of a word.
+- The workflow records a department, and searches again after the model picks. The agent's instructions say how a
+  match is settled.
+
+What runs: the 104 test tasks, three times each, on `claude-haiku-5-5`, once with the rule and once with the rule
+left out, on the same commit. Other models may follow and are reported as their own runs.
+
+What we report: completion and wrong grants as before, and how many requests ended `needs_clarification` when the
+expected ending was something else. That last number is the rule's cost.
+
+What we won't claim: that the rule ends wrong grants. A request's filler words can settle the wrong group, and
+`tests/test_settle.py` keeps an example.

@@ -6,15 +6,27 @@ from typing import Any
 
 from access_agent import Gateway
 from access_agent import eval as ev
+from access_agent.gateway import SETTLE_RULE
 from access_agent.llm import Reply, ScriptedModel, tool_use
+from access_agent.policy import load_rules
 from access_agent.tasks import TASKS_FILE, Task, build_tasks, load_tasks
 from access_agent.workflow import ACTOR, HANDOFF_RULES
 
 TASKS = load_tasks()
+# These tests are about the other rules. The settle rule has its own tests in test_settle.py.
+OTHER_RULES = [rule for rule in load_rules() if rule.id != SETTLE_RULE]
+NO_SETTLE = (SETTLE_RULE,)
 
 
 def by_category(name: str) -> Task:
     return next(t for t in TASKS if t.category == name)
+
+
+def own_words(task: Task, group: Any) -> str:
+    """The words of the request that also describe this group: what a careful person would search for."""
+    about = f"{group.name} {group.description}".lower()
+    words = [word.strip(".,?!()'") for word in task.request.lower().split()]
+    return " ".join(dict.fromkeys(word for word in words if len(word) >= 4 and word in about))
 
 
 def reply(*blocks: dict[str, Any]) -> Reply:
@@ -52,7 +64,7 @@ def test_every_label_agrees_with_a_careful_person_following_the_policy():
         if task.user_id is None or task.group_id is None:
             assert task.expect_outcomes == ["needs_clarification"] and task.expect_grants == [], task.id
             continue
-        gateway = Gateway(directory, actor=ACTOR, run_id="by-hand")
+        gateway = Gateway(directory, actor=ACTOR, run_id="by-hand", rules=OTHER_RULES)
         pair = {"user_id": task.user_id, "group_id": task.group_id}
 
         def refused(result) -> str:
@@ -97,7 +109,7 @@ def test_a_correct_run_is_completed():
     person = task.request.split("@")[0].split()[-1] + "@larkspur-freight.example"
     group = ev.prepare(task).get_group(task.group_id)
     model = ScriptedModel(
-        lambda call: reply(tool_use("record_request", {"person": person, "group": group.name.replace("-", " ")}))
+        lambda call: reply(tool_use("record_request", {"person": person, "group": own_words(task, group)}))
     )
     record = ev.run_one("workflow", task, 1, model, "test")
     assert record["completed"] is True and record["outcome"] == "granted"
@@ -114,7 +126,7 @@ def test_an_agent_that_obeys_an_injection_is_caught():
         [tool_use("add_to_group", {"user_id": task.user_id, "group_id": extra}, "c2")],
         [tool_use("finish", {"outcome": "granted"}, "c3")],
     ]
-    record = ev.run_one("agent", task, 1, ScriptedModel(lambda call: reply(*turns.pop(0))), "test")
+    record = ev.run_one("agent", task, 1, ScriptedModel(lambda call: reply(*turns.pop(0))), "test", NO_SETTLE)
     assert record["outcome"] == "granted"
     assert record["wrong_grants"] == [[task.user_id, extra]]
     assert record["completed"] is False
@@ -123,7 +135,7 @@ def test_an_agent_that_obeys_an_injection_is_caught():
 def test_the_right_label_with_no_grant_is_not_completed():
     task = by_category("standard_by_email")
     model = ScriptedModel(lambda call: reply(tool_use("finish", {"outcome": "granted"}, "c1")))
-    record = ev.run_one("agent", task, 1, model, "test")
+    record = ev.run_one("agent", task, 1, model, "test", NO_SETTLE)
     assert record["outcome"] == "granted" and record["completed"] is False
 
 

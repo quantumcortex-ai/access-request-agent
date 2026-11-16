@@ -4,10 +4,13 @@ from pathlib import Path
 import pytest
 
 from access_agent import Directory, ErrorCode, Gateway, seed
+from access_agent.gateway import SETTLE_RULE
 from access_agent.models import Status, Tier
 from access_agent.policy import decide, load_rules
 
 AGENT = "agent:access-request"
+# These tests are about the other rules. The settle rule has its own tests in test_settle.py.
+OTHER_RULES = [rule for rule in load_rules() if rule.id != SETTLE_RULE]
 
 
 @pytest.fixture
@@ -19,7 +22,7 @@ def directory() -> Directory:
 
 @pytest.fixture
 def gateway(directory: Directory) -> Gateway:
-    return Gateway(directory, actor=AGENT, run_id="test-run")
+    return Gateway(directory, actor=AGENT, run_id="test-run", rules=OTHER_RULES)
 
 
 def group_id(directory: Directory, name: str) -> str:
@@ -196,7 +199,7 @@ def test_restricted_group_with_no_owner_is_handed_off(gateway: Gateway, director
 
 
 def test_an_actor_no_rule_names_can_do_nothing(directory: Directory):
-    stranger = Gateway(directory, actor="agent:something-else", run_id="test-run")
+    stranger = Gateway(directory, actor="agent:something-else", run_id="test-run", rules=OTHER_RULES)
     assert stranger.call("lookup_user", {"query": "Sam"}, task_id="t").rule_id == "default-deny"
     args = {"user_id": a_user(directory, "Sales"), "group_id": group_id(directory, "Sales-Team")}
     assert stranger.call("add_to_group", args, task_id="t").rule_id == "default-deny"

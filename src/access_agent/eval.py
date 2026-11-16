@@ -29,6 +29,7 @@ from .approval import Approver, run
 from .directory import Directory
 from .gateway import Gateway
 from .llm import ClaudeModel, Model
+from .policy import load_rules
 from .seed import seed
 from .tasks import TASKS_FILE, Task, load_tasks
 
@@ -70,10 +71,14 @@ def new_grants(task: Task, directory: Directory) -> list[list[str]]:
     return [[r["user_id"], r["group_id"]] for r in rows if [r["user_id"], r["group_id"]] not in task.setup_members]
 
 
-def run_one(arm: str, task: Task, repeat: int, model: Model, run_id: str) -> dict[str, Any]:
+def run_one(
+    arm: str, task: Task, repeat: int, model: Model, run_id: str, without_rules: tuple[str, ...] = ()
+) -> dict[str, Any]:
     actor, build = ARMS[arm]
     directory = prepare(task)
-    gateway = Gateway(directory, actor=actor, run_id=run_id)
+    # A comparison run can leave named rules out, to measure what each one does.
+    rules = [rule for rule in load_rules() if rule.id not in without_rules]
+    gateway = Gateway(directory, actor=actor, run_id=run_id, rules=rules, request=task.request)
     graph = build(gateway, model, InMemorySaver())
     record: dict[str, Any] = {
         "arm": arm,
@@ -255,7 +260,14 @@ def load_records(run_dir: Path) -> list[dict[str, Any]]:
 
 
 def run_eval(
-    tasks: list[Task], arms: list[str], repeats: int, model: Model, run_dir: Path, *, quiet: bool = False
+    tasks: list[Task],
+    arms: list[str],
+    repeats: int,
+    model: Model,
+    run_dir: Path,
+    *,
+    quiet: bool = False,
+    without_rules: tuple[str, ...] = (),
 ) -> list[dict[str, Any]]:
     run_dir.mkdir(parents=True, exist_ok=True)
     # A crash is about the run, not the task, so crashed tasks run again when a run is continued.
@@ -267,7 +279,7 @@ def run_eval(
                 for arm in arms:
                     if (arm, task.id, repeat) in seen:
                         continue
-                    record = run_one(arm, task, repeat, model, run_dir.name)
+                    record = run_one(arm, task, repeat, model, run_dir.name, without_rules)
                     out.write(json.dumps(record) + "\n")
                     out.flush()
                     records.append(record)
@@ -287,6 +299,13 @@ def main() -> None:
     parser.add_argument("--tasks", type=Path, default=TASKS_FILE)
     parser.add_argument("--run-id", help="Continue an earlier run.")
     parser.add_argument("--report", type=Path, help="Print the table for a finished run and stop.")
+    parser.add_argument(
+        "--without-rule",
+        action="append",
+        default=[],
+        metavar="RULE_ID",
+        help="Leave this policy rule out, to measure what it does. Can be given more than once.",
+    )
     args = parser.parse_args()
 
     if args.report:
@@ -306,11 +325,17 @@ def main() -> None:
         raise SystemExit(str(exc)) from None
     run_dir = RUNS_DIR / (args.run_id or uuid.uuid4().hex[:8])
     run_dir.mkdir(parents=True, exist_ok=True)
+    known = {rule.id for rule in load_rules()}
+    unknown = [rule_id for rule_id in args.without_rule if rule_id not in known]
+    if unknown:
+        raise SystemExit(f"No rule named {', '.join(unknown)} in policy/rules.toml.")
     meta = {"model": model.name, "tasks": len(tasks), "repeats": args.repeats, "arm": args.arm, "split": args.split}
+    if args.without_rule:
+        meta["without_rules"] = sorted(args.without_rule)
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=1))
     arms = ["workflow", "agent"] if args.arm == "both" else [args.arm]
 
-    records = run_eval(tasks, arms, args.repeats, model, run_dir)
+    records = run_eval(tasks, arms, args.repeats, model, run_dir, without_rules=tuple(args.without_rule))
     report = render(summarize(records, model.name), model.name)
     (run_dir / "report.md").write_text(report + "\n")
     print(f"\n{report}\n\nSaved to {run_dir}")

@@ -25,8 +25,14 @@ SYSTEM = """You handle IT access requests for Larkspur Freight. Each request ask
 
 How to work:
 - Find the exact user and the exact group with the lookup tools. Tools that act take IDs, never names.
+- A user or a group counts as found only when a search returned it alone and every search word came from the
+  request. So search with the request's own words: an email address or a full name for the person, plus the
+  department if the request gives one, and the words the request uses for the group. A group search needs
+  every word to be in the group's name or description, so when a search finds nothing or too much, try other
+  words from the request, never words of your own. A lookup result says whether it settled the match.
 - If more than one user or group could match and the request doesn't settle which, don't guess. Finish with
-  needs_clarification.
+  needs_clarification. Do the same if a tool refuses because the match isn't settled and the request's own
+  words can't settle it.
 - Check whether the user is already a member before adding them.
 - A restricted group needs its owner's approval. Call request_approval, then add_to_group if the owner approves.
 - If a tool refuses and says to hand the request to a person, finish with handed_off. If policy or the owner
@@ -50,13 +56,21 @@ _PAIR = {
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "lookup_user",
-        "description": "Search users by name or email. Returns up to 8 matches with ID, department and status.",
-        "input_schema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+        "description": "Search users by name or email, and by department if you give one. "
+        "Returns up to 8 matches with ID, department and status, and whether this search settled the match.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string"},
+                "department": {"type": "string", "description": "Only people in this department."},
+            },
+            "required": ["query"],
+        },
     },
     {
         "name": "find_groups",
         "description": "Search groups by words in the name or description. Every word must match. "
-        "Returns up to 8 matches with ID, tier and owner.",
+        "Returns up to 8 matches with ID, tier and owner, and whether this search settled the match.",
         "input_schema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
     },
     {"name": "check_membership", "description": "Is this user already in this group?", "input_schema": _PAIR},

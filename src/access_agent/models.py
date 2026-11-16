@@ -60,6 +60,7 @@ class _Input(BaseModel):
 
 class LookupUserInput(_Input):
     query: Query = Field(description="A name or an email address.")
+    department: Query | None = Field(default=None, description="Only people in this department.")
 
 
 class FindGroupsInput(_Input):

@@ -10,9 +10,14 @@ from access_agent import Directory, Gateway, llm, seed
 from access_agent.agent import ACTOR as AGENT
 from access_agent.agent import build_agent
 from access_agent.approval import owner_says, run
+from access_agent.gateway import SETTLE_RULE
 from access_agent.llm import Reply, ScriptedModel, tool_use
+from access_agent.policy import load_rules
 from access_agent.workflow import ACTOR as WORKFLOW
 from access_agent.workflow import build_workflow
+
+# These tests are about the other rules. The settle rule has its own tests in test_settle.py.
+OTHER_RULES = [rule for rule in load_rules() if rule.id != SETTLE_RULE]
 
 
 @pytest.fixture
@@ -44,9 +49,12 @@ def reply(*blocks: dict[str, Any]) -> Reply:
 
 def forced(answers: dict[str, dict[str, Any]]) -> ScriptedModel:
     """A model for the workflow: answers each forced tool with fixed input."""
-    return ScriptedModel(
+    model = ScriptedModel(
         lambda call: reply(tool_use(call["tool_choice"]["name"], answers[call["tool_choice"]["name"]]))
     )
+    # Stands in for the request: whatever these answers search for counts as the request's own words.
+    model.words = " ".join(str(value) for answer in answers.values() for value in answer.values())
+    return model
 
 
 def script(*turns: list[dict[str, Any]]) -> ScriptedModel:
@@ -56,12 +64,12 @@ def script(*turns: list[dict[str, Any]]) -> ScriptedModel:
 
 
 def workflow(directory: Directory, model: ScriptedModel):
-    gateway = Gateway(directory, actor=WORKFLOW, run_id="wf")
+    gateway = Gateway(directory, actor=WORKFLOW, run_id="wf", rules=OTHER_RULES, request=getattr(model, "words", None))
     return build_workflow(gateway, model, InMemorySaver()), gateway
 
 
 def agent(directory: Directory, model: ScriptedModel, **kwargs: Any):
-    gateway = Gateway(directory, actor=AGENT, run_id="ag")
+    gateway = Gateway(directory, actor=AGENT, run_id="ag", rules=OTHER_RULES)
     return build_agent(gateway, model, InMemorySaver(), **kwargs), gateway
 
 
@@ -300,7 +308,7 @@ def test_an_approval_can_be_answered_by_a_new_process(tmp_path):
         saver = SqliteSaver(sqlite3.connect(str(tmp_path / "state.sqlite"), check_same_thread=False))
         user, group = uid(directory, "Finance"), gid(directory, "Finance-Payroll")
         model = forced({"record_request": {"person": email(directory, user), "group": "payroll"}})
-        gateway = Gateway(directory, actor=WORKFLOW, run_id="wf")
+        gateway = Gateway(directory, actor=WORKFLOW, run_id="wf", rules=OTHER_RULES, request=model.words)
         return build_workflow(gateway, model, saver), directory, user, group
 
     first = Directory(str(tmp_path / "directory.sqlite"))

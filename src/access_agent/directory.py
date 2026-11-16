@@ -115,17 +115,23 @@ class Directory:
         row = self.conn.execute("SELECT * FROM groups WHERE id = ?", (group_id,)).fetchone()
         return _group(row) if row else None
 
-    def search_users(self, query: str) -> list[User]:
+    def search_users(self, query: str, department: str | None = None) -> list[User]:
         like = f"%{query.lower()}%"
         rows = self.conn.execute(
-            "SELECT * FROM users WHERE lower(name) LIKE ? OR lower(email) LIKE ? ORDER BY id LIMIT ?",
-            (like, like, MAX_RESULTS),
+            "SELECT * FROM users WHERE (lower(name) LIKE ? OR lower(email) LIKE ?) "
+            "AND (? IS NULL OR lower(department) = ?) ORDER BY id LIMIT ?",
+            (like, like, department, (department or "").lower(), MAX_RESULTS),
         ).fetchall()
         return [_user(r) for r in rows]
 
     def search_groups(self, query: str) -> list[Group]:
-        """Match every word of the query against the name or the description."""
-        words = [w for w in query.lower().split() if w]
+        """Match every word of the query against the name or the description.
+
+        Punctuation at the edge of a word is dropped, so "reports," finds "reports".
+        """
+        words = [w for w in (word.strip(".,;:!?()[]'\"") for word in query.lower().split()) if w]
+        if not words:
+            return []
         clause = " AND ".join("(lower(name) LIKE ? OR lower(description) LIKE ?)" for _ in words)
         params: list[str | int] = []
         for word in words:

@@ -30,6 +30,9 @@ QuantumCortex.AI agentic engineering series.
   the gateway. After a change, run `python -m access_agent.tasks` and commit the file.
 - `tasks/held-out.jsonl`: 40 requests written blind by a separate session. Never tune an arm, a rule or a prompt
   against it, and never edit a request in it.
+- `docs/requirements.md`: the business and technical requirements. `tasks/label-rules.toml` names the requirements
+  behind every label. A new task or category needs a line there, and a label no requirement supports needs a new
+  requirement first, approved by the maintainer.
 - `tasks/dev-probes.jsonl`: hand-written dev requests for a problem the dev tasks didn't show. Never scored, and
   never a copy of a test task.
 - `src/access_agent/eval.py`: runs the set and reports. Dev tasks are for debugging. Never adjust an arm against a

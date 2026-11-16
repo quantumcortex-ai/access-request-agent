@@ -154,3 +154,10 @@ reported as a measured limit. Otherwise this set stops being unseen the way the 
 What happened: on the test set both models passed. On the held-out set `claude-sonnet-5-5` passed and
 `claude-haiku-5-5` failed: the workflow made six wrong grants, all on two requests that swap the ask. The numbers
 are in the README and the runs are in `results/2026-11-16-b4e5093-*`. Neither arm was changed afterwards.
+
+### 2026-11-16: labels point at requirements
+`docs/requirements.md` now states the business and technical requirements, and `tasks/label-rules.toml` names the
+requirements behind each label in all three task files. No label, request or rule changed. The requirements were
+written after the labels, from the policy file and ADRs 0001 to 0004, and are a draft until the maintainer approves
+them. Five held-out labels rest on a reading those sources don't spell out. They are listed on that page under
+"Open decisions".

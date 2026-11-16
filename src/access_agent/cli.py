@@ -23,7 +23,13 @@ from .seed import seed
 
 def ask_on_terminal(question: dict[str, Any]) -> dict[str, Any]:
     prompt = f"Approve adding {question['user_name']} to {question['group_name']}? [y/N] "
-    return {"approved": input(prompt).strip().lower() == "y", "approver_id": question["approver_id"]}
+    try:
+        answer = input(prompt)
+    except EOFError:
+        # Nobody is at the terminal (piped or closed input). No answer is a no.
+        print("no answer, so not approved")
+        answer = ""
+    return {"approved": answer.strip().lower() == "y", "approver_id": question["approver_id"]}
 
 
 def main() -> None:

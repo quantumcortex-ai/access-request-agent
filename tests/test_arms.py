@@ -420,3 +420,26 @@ def test_workflow_keeps_the_lowest_confidence_the_model_stated(directory: Direct
     # The audit row for the name search says two people matched.
     lookups = {row["tool"]: row["matches"] for row in gateway.audit.rows() if row["matches"] is not None}
     assert lookups == {"lookup_user": 2, "find_groups": 1}
+
+
+def test_approval_prompt_with_no_input_is_a_no(monkeypatch):
+    """A piped or closed terminal can't answer, and that must never approve or crash."""
+    import io
+
+    from access_agent.cli import ask_on_terminal
+
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    question = {"user_name": "Sam Carter", "group_name": "Finance-Payroll", "approver_id": "u-00001"}
+    assert ask_on_terminal(question) == {"approved": False, "approver_id": "u-00001"}
+
+
+def test_approval_prompt_takes_y_only(monkeypatch):
+    import io
+
+    from access_agent.cli import ask_on_terminal
+
+    question = {"user_name": "Sam Carter", "group_name": "Finance-Payroll", "approver_id": "u-00001"}
+    monkeypatch.setattr("sys.stdin", io.StringIO("Y\n"))
+    assert ask_on_terminal(question)["approved"] is True
+    monkeypatch.setattr("sys.stdin", io.StringIO("yes please\n"))
+    assert ask_on_terminal(question)["approved"] is False

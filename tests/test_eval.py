@@ -217,3 +217,20 @@ def test_signals_say_what_a_confidence_level_or_several_matches_would_have_flagg
     text = ev.render(ev.summarize(records, "claude-haiku-5-5"), "claude-haiku-5-5")
     assert "| Confidence below 70 | 1 runs: 1 of 2 misses, 1 of 1 wrong-grant runs |" in text
     assert "| A lookup returned more than one match | 2 runs: 1 of 2 misses, 1 of 1 wrong-grant runs |" in text
+
+
+def test_the_held_out_set_loads_and_names_real_records():
+    from pathlib import Path
+
+    from access_agent import Directory, seed
+    from access_agent.tasks import load_tasks
+
+    tasks = load_tasks(Path(__file__).resolve().parents[1] / "tasks" / "held-out.jsonl")
+    directory = Directory()
+    seed(directory)
+    assert len(tasks) == 40 and {t.split for t in tasks} == {"test"}
+    assert len({t.id for t in tasks}) == 40
+    for task in tasks:
+        for user_id, group_id in [*task.expect_grants, [task.user_id, task.group_id]]:
+            assert directory.get_user(user_id) is not None, task.id
+            assert directory.get_group(group_id) is not None, task.id

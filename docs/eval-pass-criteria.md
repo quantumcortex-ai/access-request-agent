@@ -148,7 +148,7 @@ What runs: the 104 validation tasks and the 40 test requests, three times each, 
 
 What we report: the same numbers as before, for each set on its own. The pass rule is the same, zero wrong grants.
 
-What we won't do: change either arm, a rule or a prompt in level 1 because of a test result. A miss there is
+What we won't do: change either arm, a rule or a prompt in stage 1 because of a test result. A miss there is
 reported as a measured limit. Otherwise this set stops being unseen the way the injection test cases did.
 
 What happened: on the validation set both models passed. On the test set `claude-sonnet-5-5` passed and
@@ -181,3 +181,5 @@ What was renamed, so the history can be followed:
   The `split` value in each older run's `meta.json` changed from `test` to `validation`.
 - The test set's five category names lost their `heldout_` prefix, in the task file and in the run records. Every
   other field of every request is the same, byte for byte.
+- The build's three steps (local, MCP, Azure) were called levels and are now called stages, so they aren't confused
+  with the series' five layers.

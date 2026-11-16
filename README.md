@@ -113,7 +113,7 @@ The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` gi
   the policy refused it all three times. The run still counts as a miss.
 - **The agent on Haiku made no wrong grant.** It saw both swaps and asked the requester which was meant, where a
   careful person would have done the original ask. Those five runs count as misses.
-- **We haven't fixed this in level 1, on purpose.** Changing the arms against a test result would spend the
+- **We haven't fixed this in stage 1, on purpose.** Changing the arms against a test result would spend the
   set the way the validation set was spent. It's a measured limit.
 
 ### Reason 3: a bigger model closed the gap, at 18 times the cost
@@ -262,15 +262,14 @@ pytest -q
 
 ## What's built and what's planned
 
-The repo is built in three levels, and each builds on the one before.
+The repo is built in three stages, and each builds on the one before.
 
-1. **Local (built):** the workflow, the agent, the eval set and the results. You need Python and a model API key.
+1. **Local (built):** the workflow, the agent, the three sets of requests and the results. You need Python and a model API key.
 2. **MCP (planned):** the same tools, served as an MCP server.
 3. **Azure (planned):** a Terraform module that deploys it for a few dollars a month.
 
-These levels are how deep the build goes. They aren't the five layers of the series. Level 1 covers three of those
-layers: execution (typed tools, approval as a step), governance (rules as code, an audit record) and economics (cost
-per completed task).
+Stage 1 covers three of the series' five layers: execution (typed tools, approval as a step), governance (rules as
+code, an audit record) and economics (cost per completed task).
 
 ## Licence
 

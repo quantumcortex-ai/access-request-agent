@@ -51,3 +51,19 @@ only a handful of misses, we say so and draw no threshold from them.
 - That a confidence level is safe to route on. A model's view of itself isn't a fact, and a level set on one
   model or prompt doesn't carry over to another.
 - That the agent is better. If the workflow wins, we publish that.
+
+## Dated notes
+
+### 2026-11-15: model comparison
+Planned before it ran. The same 104 test tasks, three times each, on `claude-sonnet-5-5`, `claude-opus-5-5` and
+`claude-fable-5-2`, and on `claude-haiku-5-5` again at the same commit so all four are measured on the same code.
+
+Two things changed in how the arms call the model, named here because the first run didn't have them:
+
+- These three models refuse a request that forces a tool call. For them the arm asks for the tool in the system
+  prompt. A reply with no tool call counts as a miss, as it did before.
+- The reply limit is 4,096 tokens, up from 1,024, because every model thinks before it answers and thinking counts
+  toward the limit. Thinking blocks are passed back to the model on the next turn.
+
+Each model runs at its default effort. No refusal fallback is used: a request a model declines counts as a miss.
+Neither arm's prompts, tools or steps changed, and nothing was adjusted against a test task.

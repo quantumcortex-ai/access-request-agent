@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 
-from access_agent import Directory, Gateway, seed
+from access_agent import Directory, Gateway, llm, seed
 from access_agent.agent import ACTOR as AGENT
 from access_agent.agent import build_agent
 from access_agent.approval import owner_says, run
@@ -359,8 +359,6 @@ def test_a_rate_limit_is_waited_out_not_counted_as_a_failure(monkeypatch):
     import anthropic
     import httpx
 
-    from access_agent import llm
-
     waits: list[float] = []
     monkeypatch.setattr(llm.time, "sleep", waits.append)
 
@@ -443,3 +441,79 @@ def test_approval_prompt_takes_y_only(monkeypatch):
     assert ask_on_terminal(question)["approved"] is True
     monkeypatch.setattr("sys.stdin", io.StringIO("yes please\n"))
     assert ask_on_terminal(question)["approved"] is False
+
+
+# Models that refuse a forced tool call
+
+
+def _recording_client():
+    class Usage:
+        input_tokens = 1
+        output_tokens = 1
+
+    class Response:
+        content: list = []
+        stop_reason = "end_turn"
+        usage = Usage()
+
+    class Messages:
+        def __init__(self):
+            self.sent: list[dict] = []
+
+        def create(self, **kwargs):
+            self.sent.append(kwargs)
+            return Response()
+
+    class Client:
+        def __init__(self):
+            self.messages = Messages()
+
+    return Client()
+
+
+def test_a_model_that_takes_a_forced_tool_call_gets_one():
+    client = _recording_client()
+    model = llm.ClaudeModel(name="claude-haiku-5-5", client=client)
+    model.complete(system="s", messages=[], tools=[], tool_choice={"type": "tool", "name": "choose"})
+    sent = client.messages.sent[0]
+    assert sent["tool_choice"] == {"type": "tool", "name": "choose"} and sent["system"] == "s"
+
+
+def test_a_model_that_refuses_a_forced_tool_call_is_asked_in_the_prompt():
+    for name in ("claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-2"):
+        client = _recording_client()
+        model = llm.ClaudeModel(name=name, client=client)
+        model.complete(system="s", messages=[], tools=[], tool_choice={"type": "tool", "name": "choose"})
+        model.complete(system="s", messages=[], tools=[], tool_choice={"type": "any"})
+        named, any_tool = client.messages.sent
+        assert "tool_choice" not in named and "tool_choice" not in any_tool
+        assert "calling the choose tool" in named["system"]
+        assert "calling a tool" in any_tool["system"]
+
+
+def test_thinking_blocks_are_kept_for_the_next_turn():
+    class Block:
+        def __init__(self, data):
+            self.data = data
+
+        def model_dump(self, **_):
+            return self.data
+
+    client = _recording_client()
+    blocks = [
+        {"type": "thinking", "thinking": "", "signature": "sig"},
+        {"type": "tool_use", "id": "c1", "name": "finish", "input": {}},
+        {"type": "server_tool_use", "id": "x"},
+    ]
+    client.messages.create = lambda **_: type(
+        "R",
+        (),
+        {
+            "content": [Block(b) for b in blocks],
+            "stop_reason": "tool_use",
+            "usage": type("U", (), {"input_tokens": 1, "output_tokens": 1})(),
+        },
+    )()
+    reply = llm.ClaudeModel(name="claude-opus-5-5", client=client).complete(system="s", messages=[], tools=[])
+    assert [b["type"] for b in reply.content] == ["thinking", "tool_use"]
+    assert len(reply.tool_uses()) == 1

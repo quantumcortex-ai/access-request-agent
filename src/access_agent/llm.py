@@ -17,7 +17,20 @@ from typing import Any, Protocol
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 FOUNDRY_SCOPE = "https://ai.azure.com/.default"
-MAX_TOKENS = 1024
+# Every current model thinks before it answers, and thinking counts toward this limit.
+MAX_TOKENS = 4096
+# These models refuse a request that forces a tool call. For them the arm asks in
+# the system prompt instead, and a reply with no tool call is handled as a miss.
+NO_FORCED_TOOL = (
+    "claude-sonnet-5-5",
+    "claude-opus-5-5",
+    "claude-fable-5-1",
+    "claude-fable-5-2",
+    "claude-mythos-5-1",
+    "claude-mythos-5-2",
+)
+# Thinking blocks go back to the model unchanged on the next turn, as the API asks.
+KEPT_BLOCKS = ("text", "tool_use", "thinking", "redacted_thinking")
 RATE_LIMIT_TRIES = 8
 RATE_LIMIT_WAIT = 65  # seconds; the limit is counted per minute
 
@@ -49,6 +62,17 @@ class Model(Protocol):
         tools: list[dict[str, Any]],
         tool_choice: dict[str, Any] | None = None,
     ) -> Reply: ...
+
+
+def forces_tools(model_name: str) -> bool:
+    return not model_name.startswith(NO_FORCED_TOOL)
+
+
+def ask_for_tool(system: str, tool_choice: dict[str, Any]) -> str:
+    """Say in the system prompt what a forced tool choice would have enforced."""
+    if tool_choice.get("type") == "tool":
+        return f"{system}\n\nAnswer by calling the {tool_choice['name']} tool. Don't answer in text."
+    return f"{system}\n\nAnswer every turn by calling a tool. Don't answer in text alone."
 
 
 def make_client() -> Any:
@@ -109,11 +133,14 @@ class ClaudeModel:
             "tools": tools,
         }
         if tool_choice is not None:
-            kwargs["tool_choice"] = tool_choice
+            if forces_tools(self.name):
+                kwargs["tool_choice"] = tool_choice
+            else:
+                kwargs["system"] = ask_for_tool(system, tool_choice)
         response = self._create(kwargs)
         content = [block.model_dump(mode="json", exclude_none=True) for block in response.content]
         return Reply(
-            content=[b for b in content if b.get("type") in ("text", "tool_use")],
+            content=[b for b in content if b.get("type") in KEPT_BLOCKS],
             stop_reason=response.stop_reason or "",
             input_tokens=response.usage.input_tokens,
             output_tokens=response.usage.output_tokens,

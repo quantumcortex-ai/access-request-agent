@@ -7,40 +7,70 @@ built as a fixed workflow and as an agent, and measured on the same eval set.
 
 Status: level 1 is built and measured. Levels 2 and 3 are planned and not built yet.
 
-## First results
+## Results
 
-One run, on 2026-11-15: the 104 test tasks, three times each, with `claude-haiku-5-5`. The pass rule was written
-down before the run: zero wrong grants in both arms. **This run fails it.** The workflow added someone to a group
-the request didn't settle, once in 312 runs.
+Every run is the 104 test tasks, three times each, 312 runs an arm. The pass rule was written down before the
+first run: zero wrong grants in both arms.
+
+**Where it stands:** the latest run passes. On `claude-haiku-5-5`, with both rules below in place, neither arm made
+a wrong grant, and each completed 311 of 312.
+
+| Run | Agent completed | Workflow completed | Wrong grants | Pass rule |
+|---|---|---|---|---|
+| 1. Haiku, first run, 2026-11-15 | 308 of 312 | 308 of 312 | workflow 1 | Fails |
+| 2. Haiku again, model-support commit | 308 of 312 | 312 of 312 | 0 | Passes |
+| 3. Sonnet, same commit as run 2 | 312 of 312 | 312 of 312 | 0 | Passes |
+| 4. Haiku, settle rule left out | 306 of 312 | 310 of 312 | agent 6, workflow 2 | Fails |
+| 5. Haiku, settle rule on | 309 of 312 | 310 of 312 | agent 3 | Fails |
+| 6. Haiku, settle rule and one-grant rule, 2026-11-16 | 311 of 312 | 311 of 312 | 0 | Passes |
+
+Runs 4 and 5 are one commit, with and without the rule. Each run's report and records are in `results/`, and
+`docs/eval-pass-criteria.md` has a dated note for every change made between runs.
+
+The latest run, run 6, at commit `95513fb`:
 
 | | Agent | Workflow |
 |---|---|---|
-| Task completion | 98.7% (97% to 100%), 308 of 312 | 98.7% (97% to 100%), 308 of 312 |
-| Completion, hard tasks | 97.6% (94% to 99%), 164 of 168 | 97.6% (94% to 99%), 164 of 168 |
-| Wrong grants | 0 | 1 |
-| First-try tool-call success | 100%, 1,294 of 1,294 | 100%, 1,408 of 1,408 |
-| Model calls per run | 4.0 | 1.2 |
-| Input tokens | 2,484,736 | 272,242 |
-| Cost per completed task, at list price | $0.0010 | $0.0001 |
+| Task completion | 99.7% (98% to 100%), 311 of 312 | 99.7% (98% to 100%), 311 of 312 |
+| Completion, hard tasks | 99.4% (97% to 100%), 167 of 168 | 99.4% (97% to 100%), 167 of 168 |
+| Wrong grants | 0 | 0 |
+| First-try tool-call success | 100%, 1,403 of 1,403 | 100%, 1,579 of 1,579 |
+| Model calls per run | 4.3 | 1.2 |
+| Input tokens | 3,237,498 | 311,859 |
+| Cost per completed task, at list price | $0.0013 | $0.0002 |
 
-Ranges are 95% intervals. The full report and every run's record are in `results/2026-11-15-haiku/`. The run used
-the code at commit `decd520`.
+Ranges are 95% intervals.
 
-What it shows:
+What the runs show:
 
-- Both arms completed the same share of tasks. The agent used about nine times the input tokens to do it.
-- The wrong grant came from the workflow. The request asked for "the Sales one", two groups fit, and on one of
-  three tries the model picked one where it should have asked. The policy allowed the add, because the person was
-  eligible for that group. The gateway checks whether an add is allowed. It can't tell that the request was vague.
-- Every miss was on a request where a lookup returned more than one match. That count comes from code, and it
-  flagged all eight missed runs, among 115 runs in all.
-- The model's own confidence was a weaker signal. The agent stated 80 to 90 on the runs it missed, the same as on
-  the runs it got right.
-- Tool calls were well-formed every time, so on typed tools with this model that number doesn't tell the arms
-  apart.
+- **A vague request became a wrong grant, and a prompt didn't stop it.** In run 1 a request asked for "the Sales
+  one", two groups fit, and the workflow picked one where it should have asked. Run 2 had none, and run 4 had five
+  of the same kind across both arms. Telling the model not to guess made it guess less often. It didn't make it
+  stop.
+- **A rule in code did.** The settle rule lets the gateway act only on a user and a group that the request's own
+  words settled. On one commit, wrong grants from vague requests went from five without it to none with it.
+- **The rule's cost is hand-backs.** In run 6 each arm sent one request back to the requester that a careful person
+  could have done. It asked for "the finance reports, read only".
+- **Our own fix caused a new failure.** To work with the settle rule, the agent's instructions told it to use "the
+  request's own words". In run 5 the agent then obeyed a forwarded "policy update" inside a request and added a
+  second group, three times. Earlier runs had refused it. The one-grant rule and plainer instructions fixed it in
+  run 6.
+- **The workflow never obeyed an injected instruction.** Its steps can only act on one person and one group.
+- **A bigger model also got to zero, at about 15 times the cost.** Sonnet completed every task on both arms before
+  either rule existed. It cost $0.0196 a completed task for the agent, against $0.0013 for Haiku with the rules.
+  One run of 312 without a miss doesn't show that it can't miss.
+- **The agent uses about ten times the input tokens** of the workflow to finish the same share of tasks.
+- **The model's stated confidence didn't flag the misses.** A count from code did: every miss in run 1 was on a
+  request where a lookup returned more than one match.
 
-What it doesn't show: anything about real service-desk requests. Every request here is generated, on a fictional
-company. See "What we won't claim" in `docs/eval-pass-criteria.md`.
+What they don't show:
+
+- Anything about real service-desk requests. Every request here is generated, on a fictional company. See "What we
+  won't claim" in `docs/eval-pass-criteria.md`.
+- That the rules end wrong grants. The settle rule can be fooled by a request's filler words, and the one-grant
+  rule doesn't choose the right group. `docs/adr/0003` and `0004` say how.
+- A clean test of the injection fix. A test task prompted it, so those cases were no longer unseen in run 6. The
+  fix was made on separate hand-written requests in `tasks/dev-probes.jsonl`.
 
 ## How it works
 

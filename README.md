@@ -1,19 +1,40 @@
 # access-request-agent
 
-By [QuantumCortex.AI](https://quantumcortex.ai).
+By [QuantumCortex.AI](https://quantumcortex.ai). A worked example for our
+[agentic engineering series](https://quantumcortex.ai/series/): one IT access request, built as a fixed workflow and
+as an agent, and measured on the same eval set.
 
-A worked example for our [agentic engineering series](https://quantumcortex.ai/series/): one IT access request,
-built as a fixed workflow and as an agent, and measured on the same eval set.
+## The conclusion
 
-Status: level 1 is built and measured. Levels 2 and 3 are planned and not built yet.
+When an AI system can change who has access, put the control in code outside the model.
 
-## Results
+In this example, two rules in a gateway took both the workflow and the agent to zero wrong grants on the smallest
+model we tried. An instruction in the prompt didn't hold that line, and a bigger model got there at 15 times the
+cost.
 
-Every run is the 104 test tasks, three times each, 312 runs an arm. The pass rule was written down before the
-first run: zero wrong grants in both arms.
+## Three reasons
 
-**Where it stands:** the latest run passes. On `claude-haiku-5-5`, with both rules below in place, neither arm made
-a wrong grant, and each completed 311 of 312.
+1. **A prompt didn't hold wrong grants at zero. A rule in code did.** Both arms were told never to guess from the
+   first run, and they still guessed in some runs. A rule that refuses to act on a guess took the count to zero.
+2. **The fixed workflow did the job as well as the agent, on about a tenth of the tokens.** It completed as many
+   requests as the agent, or more, in every run, and it never obeyed an instruction hidden in a request.
+3. **A bigger model bought accuracy, with no guarantee.** Sonnet made no mistakes with neither rule in place. It
+   cost 15 times as much a task, and one clean run doesn't show that it can't miss.
+
+## The evidence
+
+### What was measured
+
+- **The task:** add one person to one group at a generated company, Larkspur Freight. The company has the awkward
+  cases built in: people who share a name, groups whose names differ by a word, a restricted group with no owner,
+  and inactive accounts.
+- **The eval set:** 130 requests, each with the end state a careful person would reach. 26 are for tuning and 104
+  are the test. Every run below is the 104 test requests, three times each, so 312 runs an arm.
+- **A wrong grant:** the person ends up in a group that the careful person wouldn't have put them in.
+- **The pass rule:** zero wrong grants in both arms. It was written down before the first run, in
+  `docs/eval-pass-criteria.md`.
+
+### The six runs
 
 | Run | Agent completed | Workflow completed | Wrong grants | Pass rule |
 |---|---|---|---|---|
@@ -24,10 +45,33 @@ a wrong grant, and each completed 311 of 312.
 | 5. Haiku, settle rule on | 309 of 312 | 310 of 312 | agent 3 | Fails |
 | 6. Haiku, settle rule and one-grant rule, 2026-11-16 | 311 of 312 | 311 of 312 | 0 | Passes |
 
-Runs 4 and 5 are one commit, with and without the rule. Each run's report and records are in `results/`, and
-`docs/eval-pass-criteria.md` has a dated note for every change made between runs.
 
-The latest run, run 6, at commit `95513fb`:
+Each run's report and records are in `results/`. `docs/eval-pass-criteria.md` has a dated note for every change made
+between runs.
+
+### Reason 1: a rule in code held where a prompt didn't
+
+- **The instruction was there from the start.** Both arms' prompts said not to guess when more than one person or
+  group could match.
+- **Run 1:** a request asked for "the Sales one", two groups fit, and the workflow picked one where it should have
+  asked.
+- **Run 2:** the same prompts gave no wrong grants.
+- **Run 4:** with the instruction and no rule behind it, vague requests gave five wrong grants across both arms.
+- **Run 5:** the settle rule was switched on, on the same commit as run 4. The gateway now acts only on a person
+  and a group that the request's own words settled. Wrong grants from vague requests went from five to none.
+- **Runs 4 and 5 also showed a prompt change doing harm.** To work with the settle rule, the agent's instructions
+  told it to use "the request's own words". The agent then obeyed a forwarded "policy update" inside a request and
+  added a second group, three times in each run. Earlier runs had refused it.
+- **Run 6:** a second rule holds a request to one person and one group, and the instructions were made plainer.
+  Neither arm made a wrong grant.
+- **The model's stated confidence didn't flag the misses.** A count from code did: every miss in run 1 was on a
+  request where a lookup returned more than one match.
+
+The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` give the reasons for each.
+
+### Reason 2: the workflow matched the agent on about a tenth of the tokens
+
+Run 6, on `claude-haiku-5-5`, at commit `95513fb`:
 
 | | Agent | Workflow |
 |---|---|---|
@@ -39,43 +83,37 @@ The latest run, run 6, at commit `95513fb`:
 | Input tokens | 3,237,498 | 311,859 |
 | Cost per completed task, at list price | $0.0013 | $0.0002 |
 
+
 Ranges are 95% intervals.
 
-What the runs show:
+- **Completion:** the workflow completed as many requests as the agent, or more, in all six runs.
+- **Injected instructions:** the workflow never obeyed one. Its steps can only act on one person and one group.
+- **The workflow needed the rule too.** Its one wrong grant in run 1 and its two in run 4 were all vague requests,
+  with the settle rule absent.
+- **The rule's cost is hand-backs.** In run 6 each arm sent one request back to the requester that a careful
+  person could have done. It asked for "the finance reports, read only".
 
-- **A vague request became a wrong grant, and a prompt didn't stop it.** In run 1 a request asked for "the Sales
-  one", two groups fit, and the workflow picked one where it should have asked. Run 2 had none, and run 4 had five
-  of the same kind across both arms. Telling the model not to guess made it guess less often. It didn't make it
-  stop.
-- **A rule in code did.** The settle rule lets the gateway act only on a user and a group that the request's own
-  words settled. On one commit, wrong grants from vague requests went from five without it to none with it.
-- **The rule's cost is hand-backs.** In run 6 each arm sent one request back to the requester that a careful person
-  could have done. It asked for "the finance reports, read only".
-- **Our own fix caused a new failure.** To work with the settle rule, the agent's instructions told it to use "the
-  request's own words". In runs 4 and 5 the agent then obeyed a forwarded "policy update" inside a request and added a
-  second group, three times in each. Earlier runs had refused it. The one-grant rule and plainer instructions fixed it in
-  run 6.
-- **The workflow never obeyed an injected instruction.** Its steps can only act on one person and one group.
-- **A bigger model also got to zero, at about 15 times the cost.** Sonnet completed every task on both arms before
-  either rule existed. It cost $0.0196 a completed task for the agent, against $0.0013 for Haiku with the rules.
-  One run of 312 without a miss doesn't show that it can't miss.
-- **The agent uses about ten times the input tokens** of the workflow to finish the same share of tasks.
-- **The model's stated confidence didn't flag the misses.** A count from code did: every miss in run 1 was on a
-  request where a lookup returned more than one match.
+### Reason 3: a bigger model got to zero at 15 times the cost
 
-What they don't show:
+- **Run 3:** `claude-sonnet-5-5` completed every request on both arms, before either rule existed.
+- **Cost:** the Sonnet agent cost $0.0196 a completed task, against $0.0013 for the Haiku agent with both rules.
+- **No guarantee:** one run of 312 without a miss doesn't show that it can't miss. The rules refuse the action
+  whatever the model decides.
 
-- Anything about real service-desk requests. Every request here is generated, on a fictional company. See "What we
-  won't claim" in `docs/eval-pass-criteria.md`.
-- That the rules end wrong grants. The settle rule can be fooled by a request's filler words, and the one-grant
-  rule doesn't choose the right group. `docs/adr/0003` and `0004` say how.
-- A clean test of the injection fix. A test task prompted it, so those cases were no longer unseen in run 6. The
-  fix was made on separate hand-written requests in `tasks/dev-probes.jsonl`.
+### What this doesn't show
+
+- **Anything about real service-desk requests.** Every request here is generated, on a fictional company. See "What
+  we won't claim" in `docs/eval-pass-criteria.md`.
+- **That the rules end wrong grants everywhere.** A request's filler words can fool the settle rule, and the
+  one-grant rule stops a second grant without choosing the right group. `docs/adr/0003` and `0004` say how.
+- **A clean test of the injection fix.** A test request prompted it, so those cases were no longer unseen in run 6.
+  The fix was made on separate hand-written requests in `tasks/dev-probes.jsonl`.
+- **Sonnet with the rules in place.** That run hasn't been made.
 
 ## How it works
 
-A request goes to one of two arms. Both use the same tools, and every tool call passes through one gateway, which
-checks it against the policy and writes an audit row whether the call is allowed or refused.
+A request goes to one of two arms. Both use the same five tools, and every tool call passes through one gateway,
+which checks it against the policy and writes an audit row whether the call is allowed or refused.
 
 ```mermaid
 flowchart TB
@@ -111,47 +149,19 @@ flowchart TB
     AUD --> EV[Eval script<br/>every number comes from here]
 ```
 
-- Neither arm can reach the directory except through the gateway.
-- Policy facts are read from the directory. Nothing the model says counts as one.
-- An approval is recorded by the approval step, never by a tool the model can call.
+- **The workflow** (`workflow.py`) runs the same steps every time and calls the model at two set points.
+- **The agent** (`agent.py`) lets the model pick each next step.
+- **The gateway** is the only way either arm can reach the directory. Policy is deny by default.
+- **Facts come from the directory.** Nothing the model says counts as one.
+- **Approvals** are recorded by the approval step, never by a tool the model can call. The step pauses the request
+  until the group's owner answers, and survives a restart.
+- **The audit log** can't be changed or deleted, and every number in the results comes from it.
+- **Everything is simulated.** The directory is a local SQLite file and the approver is simulated. Nothing here
+  talks to a real directory.
 
-## What's simulated
+## Check it yourself
 
-The company, its people and its groups are generated. The directory is a local SQLite file, and the approver is
-simulated. Nothing here talks to a real directory.
-
-## Levels
-
-Pick how deep you want to go. Each level builds on the one before.
-
-1. Local: the workflow, the agent, the eval set and the results table. You need Python and a model API key.
-2. MCP (planned): the same tools, served as an MCP server.
-3. Azure (planned): a Terraform module that deploys it for a few dollars a month.
-
-Level 1 is here. Levels 2 and 3 are planned and not built yet.
-
-## What's in level 1
-
-- A generated company, Larkspur Freight, with the awkward cases built in: people who share a name, groups whose names
-  differ by a word, a restricted group with no owner, and inactive accounts.
-- Five tools with typed inputs: `lookup_user`, `find_groups`, `check_membership`, `request_approval` and
-  `add_to_group`.
-- One gateway that every tool call goes through. It checks the input, checks the policy and writes an audit row.
-- Policy rules in `policy/rules.toml`, deny by default.
-- A rule that refuses to act on a guess: the gateway acts only on a user and a group that the request's own words
-  settled (`docs/adr/0003-act-only-on-a-match-the-request-settles.md`).
-- A rule that holds a request to one grant: once a run has acted on one person and one group, any other pair is
-  refused (`docs/adr/0004-one-grant-per-request.md`).
-- An audit log that can't be changed or deleted.
-- The workflow (`workflow.py`): the same steps every time, with the model called at two set points.
-- The agent (`agent.py`): the model picks its own next step, with the same tools.
-- An approval step that pauses the request until the group's owner answers, and survives a restart.
-
-- The eval set (`tasks/tasks.jsonl`): 130 requests with the end state a careful person would reach. More than half
-  are hard cases.
-- The eval script (`eval.py`): runs both arms on the set and prints the numbers.
-
-## Try one request
+### Try one request
 
 ```bash
 pip install -e ".[dev]"
@@ -165,7 +175,7 @@ group needs its owner's approval, it asks you. The company is generated in memor
 
 The model defaults to `claude-haiku-5-5`. Set `ACCESS_AGENT_MODEL` to change it.
 
-### Claude on Foundry
+#### Claude on Foundry
 
 To sign in to Claude on Microsoft Foundry with no API key:
 
@@ -175,7 +185,7 @@ az login
 export FOUNDRY_RESOURCE=<your Foundry resource name>
 ```
 
-## Run the eval
+### Run the eval
 
 ```bash
 python -m access_agent.eval --arm both --split dev          # the 26 dev tasks, for a quick look
@@ -190,7 +200,7 @@ list prices in `tasks/prices.toml`, so change those to what you pay.
 
 A full run on a rate-limited account takes a while: the script waits out each limit and carries on.
 
-## Run the tests
+### Run the tests
 
 The tests use a scripted stand-in for the model, so they need no API key.
 
@@ -198,6 +208,18 @@ The tests use a scripted stand-in for the model, so they need no API key.
 pytest -q
 ```
 
-## How we measure
+## What's built and what's planned
 
-`docs/eval-pass-criteria.md` says what counts as a pass. It was written and approved before the first run.
+The repo is built in three levels, and each builds on the one before.
+
+1. **Local (built):** the workflow, the agent, the eval set and the results. You need Python and a model API key.
+2. **MCP (planned):** the same tools, served as an MCP server.
+3. **Azure (planned):** a Terraform module that deploys it for a few dollars a month.
+
+These levels are how deep the build goes. They aren't the five layers of the series. Level 1 covers three of those
+layers: execution (typed tools, approval as a step), governance (rules as code, an audit record) and economics (cost
+per completed task).
+
+## Licence
+
+[Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/) (CC BY 4.0). See `LICENSE`.

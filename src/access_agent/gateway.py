@@ -43,6 +43,17 @@ ONE_GRANT_RULE = "one-grant-per-request"
 _EDGE_PUNCTUATION = ".,;:!?()[]{}'\"<>"
 
 
+def _words(query: str) -> list[str]:
+    words = [word.strip(_EDGE_PUNCTUATION) for word in query.lower().split()]
+    return [word for word in words if word]
+
+
+def outside_request(query: str, request: str | None) -> list[str]:
+    """The words of this search that the request doesn't contain."""
+    text = (request or "").lower()
+    return [word for word in _words(query) if word not in text]
+
+
 def grounded(query: str, request: str | None) -> bool:
     """Does every word of this search appear in the request?
 
@@ -51,10 +62,7 @@ def grounded(query: str, request: str | None) -> bool:
     """
     if not request:
         return False
-    text = request.lower()
-    words = [word.strip(_EDGE_PUNCTUATION) for word in query.lower().split()]
-    words = [word for word in words if word]
-    return bool(words) and all(word in text for word in words)
+    return bool(_words(query)) and not outside_request(query, request)
 
 
 def names_whole(name: str, request: str | None) -> bool:
@@ -187,12 +195,15 @@ class Gateway:
         settled = len(groups) == 1 and grounded(args.query, self.request)
         if settled:
             self._settled_groups.add(groups[0].id)
-        return ToolResult(
-            ok=True,
-            tool="find_groups",
-            rule_id="read-directory",
-            data={"groups": [_public_group(g) for g in groups], "settled": settled},
-        )
+        data: dict[str, Any] = {"groups": [_public_group(g) for g in groups], "settled": settled}
+        # Say why a search didn't settle, so the caller can drop the word that spoiled it
+        # instead of giving up. This changes nothing about what counts as settled.
+        outside = outside_request(args.query, self.request) if self.request else []
+        if outside:
+            data["words_not_in_request"] = outside
+        if not groups:
+            data["words_in_no_group"] = [w for w in _words(args.query) if not self.directory.search_groups(w)]
+        return ToolResult(ok=True, tool="find_groups", rule_id="read-directory", data=data)
 
     def _check_membership(self, args: CheckMembershipInput) -> ToolResult:
         denied = self._check("check_membership", {})

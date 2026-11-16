@@ -225,6 +225,34 @@ def test_workflow_settles_a_pick_with_words_from_the_request(directory: Director
     assert final["outcome"] == "granted" and directory.is_member(user, group)
 
 
+def test_workflow_drops_a_word_the_request_lacks_before_it_searches_again(directory: Directory):
+    # The model adds "monthly", which the group's record has and the request doesn't. On its own
+    # that word would spoil a search the request's own words settle.
+    task = next(t for t in TASKS if t.id == "t-081")
+    user, group = named(directory, "Vik Underhill", "Legal"), gid(directory, "Finance-Reports")
+    answers = {
+        "record_request": {"person": "Vik Underhill", "department": "Legal", "group": "finance reports"},
+        "choose": {"user_id": user, "group_id": group, "group_words": "read monthly finance reports"},
+    }
+    model = ScriptedModel(lambda call: reply(tool_use(call["tools"][0]["name"], answers[call["tools"][0]["name"]])))
+    gateway = gateway_for(directory, task.request, WORKFLOW)
+    graph = build_workflow(gateway, model, InMemorySaver())
+    final = run(graph, {"task_id": task.id, "request": task.request}, thread_id="1", approver=owner_says(True))
+    assert final["outcome"] == "granted"
+    assert directory.is_member(user, group)
+
+
+def test_a_group_search_names_the_words_that_spoiled_it(directory: Directory):
+    request = "Access request: add Dev Farrow to the finance reports, read only."
+    gateway = gateway_for(directory, request)
+    nothing = gateway.call("find_groups", {"query": "finance reports read only"}, task_id="t")
+    assert nothing.data["groups"] == [] and nothing.data["words_in_no_group"] == ["only"]
+    guess = gateway.call("find_groups", {"query": "monthly finance reports read"}, task_id="t")
+    assert guess.data["settled"] is False and guess.data["words_not_in_request"] == ["monthly"]
+    asked = gateway.call("find_groups", {"query": "finance reports read"}, task_id="t")
+    assert asked.data["settled"] is True and "words_not_in_request" not in asked.data
+
+
 def test_agent_that_guesses_is_refused_and_ends_with_clarification(directory: Directory):
     user = named(directory, "Sam Carter", "Sales")
     email, group = directory.get_user(user).email, gid(directory, "Sales-Team")

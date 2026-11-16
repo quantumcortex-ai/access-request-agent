@@ -219,12 +219,14 @@ def build_workflow(gateway: Gateway, model: Model, checkpointer: Any = None) -> 
                 who["department"] = department
             gateway.call("lookup_user", who, task_id=state["task_id"])
             # Of the words the model gave, keep the ones the picked group's record contains:
-            # the search needs every word to match. Whether they come from the request, and
-            # whether they match only this group, is for the gateway to say.
+            # the search needs every word to match. Whether they match only this group is
+            # for the gateway to say.
             group = next(g for g in groups if g["id"] == group_id)
             about = f"{group['name']} {group['description']}".lower()
             given = [w.strip(".,;:!?()[]'\"") for w in str(picked.get("group_words") or "").lower().split()]
-            words = " ".join(dict.fromkeys(w for w in given if len(w) >= 2 and w in about))
+            # A word the request doesn't contain would spoil the search, so it is left out too.
+            asked = state["request"].lower()
+            words = " ".join(dict.fromkeys(w for w in given if len(w) >= 2 and w in about and w in asked))
             if words:
                 gateway.call("find_groups", {"query": words}, task_id=state["task_id"])
         return update | {"user_id": user_id, "group_id": group_id}

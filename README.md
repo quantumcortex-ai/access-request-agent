@@ -1,11 +1,11 @@
 # access-request-agent
 
-By QuantumCortex.AI.
+By [QuantumCortex.AI](https://quantumcortex.ai).
 
-A worked example for our agentic engineering series: one IT access request, built as a fixed workflow and as an
-agent, and measured on the same eval set.
+A worked example for our [agentic engineering series](https://quantumcortex.ai/series/): one IT access request,
+built as a fixed workflow and as an agent, and measured on the same eval set.
 
-Status: level 1 is built and measured. Levels 2 and 3 aren't started.
+Status: level 1 is built and measured. Levels 2 and 3 are planned and not built yet.
 
 ## First results
 
@@ -24,7 +24,7 @@ the request didn't settle, once in 312 runs.
 | Cost per completed task, at list price | $0.0010 | $0.0001 |
 
 Ranges are 95% intervals. The full report and every run's record are in `results/2026-11-15-haiku/`. The run used
-the code at commit `b2d6ca7`.
+the code at commit `decd520`.
 
 What it shows:
 
@@ -95,10 +95,10 @@ simulated. Nothing here talks to a real directory.
 Pick how deep you want to go. Each level builds on the one before.
 
 1. Local: the workflow, the agent, the eval set and the results table. You need Python and a model API key.
-2. MCP: the same tools, served as an MCP server.
-3. Azure: a Terraform module that deploys it for a few dollars a month.
+2. MCP (planned): the same tools, served as an MCP server.
+3. Azure (planned): a Terraform module that deploys it for a few dollars a month.
 
-Level 1 is here. Levels 2 and 3 aren't started.
+Level 1 is here. Levels 2 and 3 are planned and not built yet.
 
 ## What's in level 1
 

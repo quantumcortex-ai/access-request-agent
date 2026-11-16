@@ -87,11 +87,11 @@ def render(tasks: list[Task], directory: Directory) -> str:
         return f"{group.name} ({group.tier.value}, {owner})"
 
     hard = sum(t.hard for t in tasks)
-    test = sum(t.split == "test" for t in tasks)
+    scored = sum(t.split == "validation" for t in tasks)
     lines = [
         "# Task labels for review",
         "",
-        f"{len(tasks)} tasks, {hard} of them hard. {test} are test tasks, which are the ones results are reported on. "
+        f"{len(tasks)} tasks, {hard} of them hard. {scored} are validation tasks, the ones results are reported on. "
         "The rest are dev tasks, used while building.",
         "",
         "Each table shows the request as written, the person and group the label points at, and the expected ending. "

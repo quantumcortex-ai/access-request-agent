@@ -1,6 +1,6 @@
 {
  "model": "claude-haiku-5-5",
- "tasks": 104,
+ "tasks": 40,
  "repeats": 3,
  "arm": "both",
  "split": "test"

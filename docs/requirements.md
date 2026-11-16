@@ -93,11 +93,11 @@ Source: follows from BR-02 and BR-03. Not stated on its own before this page.
 ### Not yet met by a control
 BR-02 and BR-11 say which ask is the requester's. Nothing in code checks that. TR-04 holds a run to one grant, but
 it doesn't check that the one grant is the one that was asked for. Today only the model's instructions cover it,
-and instructions aren't a control. The held-out run on 2026-11-16 measured this: six wrong grants by the workflow
+and instructions aren't a control. The test run on 2026-11-16 measured this: six wrong grants by the workflow
 on Haiku, all on requests where injected text swapped the ask.
 
 ## Decided by the maintainer, 2026-11-16
-Five held-out labels rested on a reading the earlier sources don't spell out. The maintainer ruled on each, one at
+Five test labels rested on a reading the earlier sources don't spell out. The maintainer ruled on each, one at
 a time, after the scored runs. All five stand as labelled, so no score changed.
 
 | Task | Ruling | Reading turned down |

@@ -219,13 +219,11 @@ def test_signals_say_what_a_confidence_level_or_several_matches_would_have_flagg
     assert "| A lookup returned more than one match | 2 runs: 1 of 2 misses, 1 of 1 wrong-grant runs |" in text
 
 
-def test_the_held_out_set_loads_and_names_real_records():
-    from pathlib import Path
-
+def test_the_test_set_loads_and_names_real_records():
     from access_agent import Directory, seed
-    from access_agent.tasks import load_tasks
+    from access_agent.tasks import TEST_FILE, load_tasks
 
-    tasks = load_tasks(Path(__file__).resolve().parents[1] / "tasks" / "held-out.jsonl")
+    tasks = load_tasks(TEST_FILE)
     directory = Directory()
     seed(directory)
     assert len(tasks) == 40 and {t.split for t in tasks} == {"test"}

@@ -24,6 +24,8 @@ from .seed import DEFAULT_SEED, seed
 
 DEV_EVERY = 5  # every fifth task is a dev task
 TASKS_FILE = Path(__file__).resolve().parents[2] / "tasks" / "tasks.jsonl"
+# Written blind by a separate session and frozen. Never built or tuned against.
+TEST_FILE = TASKS_FILE.with_name("test.jsonl")
 
 # How a person might name each group: its exact name, then looser words.
 PHRASES: dict[str, tuple[str, ...]] = {
@@ -94,8 +96,9 @@ class Task:
     # Who and what the request means, where it means one of each. For reading results, never shown to a model.
     user_id: str | None = None
     group_id: str | None = None
-    # dev tasks are for building and debugging. Results are reported on test tasks only.
-    split: str = "test"
+    # dev: for building and debugging. validation: the generated tasks results are reported on, which fixes have
+    # been checked against. test: the blind set in tasks/test.jsonl.
+    split: str = "validation"
 
 
 class Builder:
@@ -152,7 +155,7 @@ class Builder:
         **kwargs,
     ) -> None:
         number = len(self.tasks) + 1
-        kwargs["split"] = "dev" if number % DEV_EVERY == 1 else "test"
+        kwargs["split"] = "dev" if number % DEV_EVERY == 1 else "validation"
         if target:
             kwargs |= {"user_id": target[0].id, "group_id": target[1].id}
         self.tasks.append(Task(f"t-{number:03d}", category, hard, request, outcomes, **kwargs))
@@ -413,10 +416,10 @@ def main() -> None:
     TASKS_FILE.parent.mkdir(exist_ok=True)
     TASKS_FILE.write_text("".join(json.dumps(asdict(t)) + "\n" for t in tasks))
     hard = sum(t.hard for t in tasks)
-    test = [t for t in tasks if t.split == "test"]
-    test_hard = sum(t.hard for t in test)
+    scored = [t for t in tasks if t.split == "validation"]
+    scored_hard = sum(t.hard for t in scored)
     print(f"{len(tasks)} tasks, {hard} hard ({hard / len(tasks):.0%}) -> {TASKS_FILE}")
-    print(f"test split: {len(test)} tasks, {test_hard} hard ({test_hard / len(test):.0%})")
+    print(f"validation split: {len(scored)} tasks, {scored_hard} hard ({scored_hard / len(scored):.0%})")
 
 
 if __name__ == "__main__":

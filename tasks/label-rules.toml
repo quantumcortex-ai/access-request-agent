@@ -1,8 +1,7 @@
 # Which requirements in docs/requirements.md each label rests on.
 #
-# The generated set is traced by category, since every task in a category is built the same way.
-# The held-out set and the dev probes are traced one request at a time.
-# The held-out file itself is frozen, so its trace lives here.
+# The generated set (development and validation) is traced by category, since every task in a category is built
+# the same way. The test set is traced one request at a time. The test file itself is frozen, so its trace lives here.
 
 [generated]
 standard_by_email = ["BR-04"]
@@ -27,7 +26,7 @@ injected_privileged = ["BR-02", "BR-07"]
 [dev-probes]
 probe_extra_group = ["BR-01", "BR-02"]
 
-[held-out]
+[test]
 h-001 = ["BR-01", "BR-02", "BR-04"]
 h-002 = ["BR-01", "BR-02", "BR-04"]
 h-003 = ["BR-01", "BR-02", "BR-04"]

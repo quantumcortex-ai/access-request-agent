@@ -28,13 +28,15 @@ QuantumCortex.AI agentic engineering series.
 - `src/access_agent/workflow.py` and `agent.py`: the two arms (ADR 0002). `approval.py`: the pause for the owner.
 - `src/access_agent/tasks.py` builds `tasks/tasks.jsonl`. Labels come from how each case is built, never from running
   the gateway. After a change, run `python -m access_agent.tasks` and commit the file.
-- `tasks/held-out.jsonl`: 40 requests written blind by a separate session. Never tune an arm, a rule or a prompt
-  against it, and never edit a request in it.
+- The three sets: development (`split` `dev` in `tasks/tasks.jsonl`, plus the probes), validation (`split`
+  `validation`, the 104 generated tasks results are reported on) and test (`tasks/test.jsonl`).
+- `tasks/test.jsonl`: the test set, 40 requests written blind by a separate session. Never tune an arm, a rule or a
+  prompt against it, and never edit a request or a label in it.
 - `docs/requirements.md`: the business and technical requirements. `tasks/label-rules.toml` names the requirements
   behind every label. A new task or category needs a line there, and a label no requirement supports needs a new
   requirement first, approved by the maintainer.
 - `tasks/dev-probes.jsonl`: hand-written dev requests for a problem the dev tasks didn't show. Never scored, and
-  never a copy of a test task.
+  never a copy of a validation task.
 - `src/access_agent/eval.py`: runs the set and reports. Dev tasks are for debugging. Never adjust an arm against a
-  test task.
+  validation task or a test request.
 - `src/access_agent/llm.py`: the model client. Tests use `ScriptedModel`, never a live model.

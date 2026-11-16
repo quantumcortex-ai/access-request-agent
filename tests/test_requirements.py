@@ -24,8 +24,8 @@ def test_every_generated_category_and_dev_probe_is_traced():
     assert {t["category"] for t in _rows("dev-probes.jsonl")} == set(TRACE["dev-probes"])
 
 
-def test_every_held_out_request_is_traced():
-    assert {t["id"] for t in _rows("held-out.jsonl")} == set(TRACE["held-out"])
+def test_every_test_request_is_traced():
+    assert {t["id"] for t in _rows("test.jsonl")} == set(TRACE["test"])
 
 
 def test_a_label_cites_only_business_requirements_that_exist():

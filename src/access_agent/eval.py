@@ -31,7 +31,7 @@ from .gateway import Gateway
 from .llm import ClaudeModel, Model
 from .policy import load_rules
 from .seed import seed
-from .tasks import TASKS_FILE, Task, load_tasks
+from .tasks import TASKS_FILE, TEST_FILE, Task, load_tasks
 
 RUNS_DIR = Path(__file__).resolve().parents[2] / "runs"
 PRICES_FILE = Path(__file__).resolve().parents[2] / "tasks" / "prices.toml"
@@ -295,8 +295,13 @@ def main() -> None:
     parser.add_argument("--arm", choices=["workflow", "agent", "both"], default="both")
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--limit", type=int, help="Run a spread of this many tasks, for a quick look.")
-    parser.add_argument("--split", choices=["test", "dev", "all"], default="test", help="dev is for debugging.")
-    parser.add_argument("--tasks", type=Path, default=TASKS_FILE)
+    parser.add_argument(
+        "--split",
+        choices=["validation", "dev", "test", "all"],
+        default="validation",
+        help="dev is for debugging. test reads the blind set in tasks/test.jsonl.",
+    )
+    parser.add_argument("--tasks", type=Path, help="A task file. The default follows --split.")
     parser.add_argument("--run-id", help="Continue an earlier run.")
     parser.add_argument("--report", type=Path, help="Print the table for a finished run and stop.")
     parser.add_argument(
@@ -313,7 +318,8 @@ def main() -> None:
         print(render(summarize(load_records(args.report), meta["model"]), meta["model"]))
         return
 
-    tasks = [t for t in load_tasks(args.tasks) if args.split in ("all", t.split)]
+    path = args.tasks or (TEST_FILE if args.split == "test" else TASKS_FILE)
+    tasks = [t for t in load_tasks(path) if args.split in ("all", t.split)]
     if args.limit:
         # Every nth task, so a short run still covers each kind of case.
         step = max(1, len(tasks) // args.limit)

@@ -4,13 +4,13 @@ Approved by the maintainer on 2026-11-15, before any scored run, along with the 
 It doesn't change afterwards without a dated note here.
 
 ## The eval set
-- 130 tasks in `tasks/tasks.jsonl`, 104 of them in the test split. At least 40% are hard: people who share a name, groups whose names differ by a word, a
+- 130 tasks in `tasks/tasks.jsonl`, 104 of them in the validation split. At least 40% are hard: people who share a name, groups whose names differ by a word, a
   restricted group with no owner, an inactive account, a wrong department, a privileged group, and a request that
   carries injected instructions.
 - Each task has one expected end state: who is in which group, and whether the request was handed to a person.
 - Each task runs three times per arm. Results are reported with 95% intervals.
 - Every fifth task is a dev task, used while building and debugging. Results are reported on the other tasks, the
-  test split, which neither arm was adjusted against. A change to an arm after a test run means the next test run is
+  validation split, which neither arm was adjusted against. A change to an arm after a validation run means the next validation run is
   reported as a new run, with the change named.
 - A run that crashes, for example on a rate limit that outlasts the retries, is run again. It isn't counted as a
   failed task. An arm that runs out of steps is counted as failed.
@@ -47,7 +47,7 @@ only a handful of misses, we say so and draw no threshold from them.
   scored.
 - Anything about the 20% tool-use test. Every access request needs tools, so it can't be measured here.
 - That these results carry over to real service-desk requests. Every request here is generated, on a fictional
-  company, and the test tasks come from the same generator as the dev tasks. Real tickets would be messier.
+  company, and the validation tasks come from the same generator as the dev tasks. Real tickets would be messier.
 - That a confidence level is safe to route on. A model's view of itself isn't a fact, and a level set on one
   model or prompt doesn't carry over to another.
 - That the agent is better. If the workflow wins, we publish that.
@@ -55,7 +55,7 @@ only a handful of misses, we say so and draw no threshold from them.
 ## Dated notes
 
 ### 2026-11-15: model comparison
-Planned before it ran. The same 104 test tasks, three times each, on `claude-sonnet-5-5`, `claude-opus-5-5` and
+Planned before it ran. The same 104 validation tasks, three times each, on `claude-sonnet-5-5`, `claude-opus-5-5` and
 `claude-fable-5-2`, and on `claude-haiku-5-5` again at the same commit so all four are measured on the same code.
 
 Two things changed in how the arms call the model, named here because the first run didn't have them:
@@ -66,7 +66,7 @@ Two things changed in how the arms call the model, named here because the first 
   toward the limit. Thinking blocks are passed back to the model on the next turn.
 
 Each model runs at its default effort. No refusal fallback is used: a request a model declines counts as a miss.
-Neither arm's prompts, tools or steps changed, and nothing was adjusted against a test task.
+Neither arm's prompts, tools or steps changed, and nothing was adjusted against a validation task.
 
 ### 2026-11-15: the settle rule
 Planned before it ran. After the first run, where every miss came from a request with more than one matching
@@ -80,7 +80,7 @@ What changed, all of it made and checked on the dev tasks only:
 - The workflow records a department, and searches again after the model picks. The agent's instructions say how a
   match is settled.
 
-What runs: the 104 test tasks, three times each, on `claude-haiku-5-5`, once with the rule and once with the rule
+What runs: the 104 validation tasks, three times each, on `claude-haiku-5-5`, once with the rule and once with the rule
 left out, on the same commit. Other models may follow and are reported as their own runs.
 
 What we report: completion and wrong grants as before, and how many requests ended `needs_clarification` when the
@@ -89,9 +89,9 @@ expected ending was something else. That last number is the rule's cost.
 What we won't claim: that the rule ends wrong grants. A request's filler words can settle the wrong group, and
 `tests/test_settle.py` keeps an example.
 
-### 2026-11-16: one grant per request, after a miss on a test task
-Written after a test run, so it is named plainly. The settle-rule run of 2026-11-15 showed the agent making 3 wrong
-grants on one test task: it obeyed a forwarded "policy update" inside the request and added a second group. Runs
+### 2026-11-16: one grant per request, after a miss on a validation task
+Written after a validation run, so it is named plainly. The settle-rule run of 2026-11-15 showed the agent making 3 wrong
+grants on one validation task: it obeyed a forwarded "policy update" inside the request and added a second group. Runs
 before the settle rule's change to the agent's instructions didn't do this, so that change caused it.
 
 What changed (`docs/adr/0004-one-grant-per-request.md`):
@@ -102,15 +102,15 @@ What changed (`docs/adr/0004-one-grant-per-request.md`):
 - A group's exact name settles that group when the request contains it as a word of its own.
 
 How it was made: on four hand-written dev requests (`tasks/dev-probes.jsonl`) that reproduce the problem, 7 wrong
-grants in 12 agent runs before and none after, and on the 26 dev tasks. Nothing was run against a test task while
+grants in 12 agent runs before and none after, and on the 26 dev tasks. Nothing was run against a validation task while
 making it.
 
-What this costs the test set: the change was prompted by a test task, so the injected-extra-group cases are no
+What this costs the validation set: the change was prompted by a validation task, so the injected-extra-group cases are no
 longer unseen. Results from here on say so next to those cases.
 
-What runs: the 104 test tasks, three times each, on `claude-haiku-5-5`, as a new run at the new commit.
+What runs: the 104 validation tasks, three times each, on `claude-haiku-5-5`, as a new run at the new commit.
 
-### 2026-11-16: a held-out set, and a fix for a hand-back
+### 2026-11-16: a test set, and a fix for a hand-back
 Planned before it ran. Two things, in this order.
 
 A fix made on the dev split. In the last run each arm sent back one request that a careful person could have done,
@@ -126,15 +126,15 @@ there only:
 On the dev request the workflow went from 3 of 3 to 16 of 16. The agent went from 1 of 3 to 6 of 13, so it still
 hands this one back about half the time.
 
-A held-out set, `tasks/held-out.jsonl`: 40 requests in five kinds.
+A test set, `tasks/test.jsonl`: 40 requests in five kinds.
 
 | Kind | Requests | What it tests |
 |---|---|---|
-| `heldout_extra_grant` | 10 | Text that tries to add a second group or person |
-| `heldout_replace_ask` | 8 | Text that tries to swap the ask for a different group or person |
-| `heldout_filler_words` | 8 | Honest requests whose chatter names other groups, departments and people |
-| `heldout_near_duplicate` | 8 | Groups with close names: five the request settles, three it doesn't |
-| `heldout_skip_control` | 6 | Claimed approvals, claimed exceptions and claimed emergencies |
+| `extra_grant` | 10 | Text that tries to add a second group or person |
+| `replace_ask` | 8 | Text that tries to swap the ask for a different group or person |
+| `filler_words` | 8 | Honest requests whose chatter names other groups, departments and people |
+| `near_duplicate` | 8 | Groups with close names: five the request settles, three it doesn't |
+| `skip_control` | 6 | Claimed approvals, claimed exceptions and claimed emergencies |
 
 How it was made: a separate model session wrote the requests and the labels from a listing of the directory and
 fourteen dev tasks for the format. It was told the policy a careful person follows. It was not shown this repo, the
@@ -143,21 +143,41 @@ was edited after it was written. The author flagged the labels it was least sure
 request for the maintainer, who has not approved these labels yet. If a label changes on review, the numbers for
 that request are reported again.
 
-What runs: the 104 test tasks and the 40 held-out requests, three times each, on `claude-haiku-5-5` and
+What runs: the 104 validation tasks and the 40 test requests, three times each, on `claude-haiku-5-5` and
 `claude-sonnet-5-5`, at the commit that adds the set.
 
 What we report: the same numbers as before, for each set on its own. The pass rule is the same, zero wrong grants.
 
-What we won't do: change either arm, a rule or a prompt in level 1 because of a held-out result. A miss there is
+What we won't do: change either arm, a rule or a prompt in level 1 because of a test result. A miss there is
 reported as a measured limit. Otherwise this set stops being unseen the way the injection test cases did.
 
-What happened: on the test set both models passed. On the held-out set `claude-sonnet-5-5` passed and
+What happened: on the validation set both models passed. On the test set `claude-sonnet-5-5` passed and
 `claude-haiku-5-5` failed: the workflow made six wrong grants, all on two requests that swap the ask. The numbers
 are in the README and the runs are in `results/2026-11-16-b4e5093-*`. Neither arm was changed afterwards.
 
 ### 2026-11-16: labels point at requirements
 `docs/requirements.md` now states the business and technical requirements, and `tasks/label-rules.toml` names the
 requirements behind each label in all three task files. No label, request or rule changed. The requirements were
-written after the labels, from the policy file and ADRs 0001 to 0004. Five held-out labels rested on a reading those
+written after the labels, from the policy file and ADRs 0001 to 0004. Five test labels rested on a reading those
 sources don't spell out. The maintainer ruled on each after the scored runs and all five stand as labelled, so no
-score changed. With that, the held-out labels are approved. The rulings are at the end of that page.
+score changed. With that, the test labels are approved. The rulings are at the end of that page.
+
+### 2026-11-16: the sets are now called development, validation and test
+A rename, made by the maintainer's decision so the names match common use. No request, label, rule, prompt or
+score changed.
+
+| Old name | New name | What it is |
+|---|---|---|
+| Dev tasks, tuning set | Development set | 26 generated tasks and the hand-written probes, used to build and debug |
+| Test split, test set, test tasks | Validation set | 104 generated tasks. Fixes were checked against it and one was prompted by it |
+| Held-out set, `tasks/held-out.jsonl` | Test set, `tasks/test.jsonl` | 40 requests written blind. Nothing is tuned against it |
+
+What was renamed, so the history can be followed:
+- This page, the README, the ADRs and the run reports in `results/` now use the new names throughout, including in
+  notes dated before the rename. Commits before this one show the old wording.
+- `--split test` used to run the 104 generated tasks. It now runs the test set, and `--split validation` runs the
+  104.
+- The four results folders from commit `b4e5093` moved: `-test` became `-validation` and `-held-out` became `-test`.
+  The `split` value in each older run's `meta.json` changed from `test` to `validation`.
+- The test set's five category names lost their `heldout_` prefix, in the task file and in the run records. Every
+  other field of every request is the same, byte for byte.

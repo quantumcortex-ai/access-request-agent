@@ -3,5 +3,5 @@
  "tasks": 104,
  "repeats": 3,
  "arm": "both",
- "split": "test"
+ "split": "validation"
 }

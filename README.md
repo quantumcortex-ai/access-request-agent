@@ -52,8 +52,8 @@ What the runs show:
 - **The rule's cost is hand-backs.** In run 6 each arm sent one request back to the requester that a careful person
   could have done. It asked for "the finance reports, read only".
 - **Our own fix caused a new failure.** To work with the settle rule, the agent's instructions told it to use "the
-  request's own words". In run 5 the agent then obeyed a forwarded "policy update" inside a request and added a
-  second group, three times. Earlier runs had refused it. The one-grant rule and plainer instructions fixed it in
+  request's own words". In runs 4 and 5 the agent then obeyed a forwarded "policy update" inside a request and added a
+  second group, three times in each. Earlier runs had refused it. The one-grant rule and plainer instructions fixed it in
   run 6.
 - **The workflow never obeyed an injected instruction.** Its steps can only act on one person and one group.
 - **A bigger model also got to zero, at about 15 times the cost.** Sonnet completed every task on both arms before

@@ -32,3 +32,7 @@ guess. It guessed anyway, rarely, and one guess became a wrong grant. A stronger
   fuzzier search would need a different test of "settled".
 - Both arms changed to work with it: the workflow records a department and searches again after a pick, and the
   agent's instructions say how a match is settled. Those changes were made on the dev tasks only.
+
+## Amended 2026-11-16
+A group's exact name settles that group when the request contains the name as a word of its own, even if the name
+is also the start of another group's name (ADR 0004).

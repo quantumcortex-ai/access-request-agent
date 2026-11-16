@@ -5,13 +5,18 @@ validate the input -> look up the facts -> check policy -> act -> write the audi
 The workflow and the agent both call tools through here, so both are held to
 the same rules and measured from the same log.
 
-The gateway also remembers which users and groups the request itself settled:
-each was the only result of a search whose every word appears in the request.
-That is a fact for the policy, worked out here and never taken from the model.
+The gateway also remembers two things about the run, as facts for the policy.
+Both are worked out here and never taken from the model:
+
+- which users and groups the request itself settled: each was the only result
+  of a search whose every word appears in the request;
+- which user and group the run has already acted on, because a request adds
+  one person to one group.
 """
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -34,6 +39,7 @@ from .models import (
 from .policy import Rule, decide, load_rules
 
 SETTLE_RULE = "match-must-be-settled-by-the-request"
+ONE_GRANT_RULE = "one-grant-per-request"
 _EDGE_PUNCTUATION = ".,;:!?()[]{}'\"<>"
 
 
@@ -49,6 +55,16 @@ def grounded(query: str, request: str | None) -> bool:
     words = [word.strip(_EDGE_PUNCTUATION) for word in query.lower().split()]
     words = [word for word in words if word]
     return bool(words) and all(word in text for word in words)
+
+
+def names_whole(name: str, request: str | None) -> bool:
+    """Does the request contain this exact group name, as a word of its own?
+
+    "Finance-Reports" is not named by a request for "Finance-Reports-Editors".
+    """
+    if not request:
+        return False
+    return re.search(rf"(?<![\w-]){re.escape(name.lower())}(?![\w-])", request.lower()) is not None
 
 
 TOOL_INPUTS: dict[str, type[BaseModel]] = {
@@ -88,6 +104,8 @@ class Gateway:
         self.request = request
         self._settled_users: set[str] = set()
         self._settled_groups: set[str] = set()
+        # The one user and group this run has acted on, once it has.
+        self._acted_on: tuple[str, str] | None = None
         self.rules = rules if rules is not None else load_rules()
         self.audit = AuditLog(directory.conn)
         self._handlers: dict[str, Callable[[Any], ToolResult]] = {
@@ -161,6 +179,11 @@ class Gateway:
         if denied:
             return denied
         groups = self.directory.search_groups(args.query)
+        # A group's exact name, when the request names it, means that group and no other,
+        # even if the name is also the start of another group's name.
+        exact = [g for g in groups if g.name.lower() == args.query.lower()]
+        if len(groups) > 1 and exact and names_whole(exact[0].name, self.request):
+            groups = exact
         settled = len(groups) == 1 and grounded(args.query, self.request)
         if settled:
             self._settled_groups.add(groups[0].id)
@@ -192,6 +215,7 @@ class Gateway:
         decision = decide(self.rules, self.actor, "add_to_group", facts)
         if not decision.allowed:
             return self._denied("add_to_group", decision.rule_id, decision.reason)
+        self._acted_on = (user.id, group.id)
         already = self.directory.is_member(user.id, group.id)
         if not already:
             self.directory.add_member(user.id, group.id, added_by=self.actor)
@@ -219,6 +243,7 @@ class Gateway:
         decision = decide(self.rules, self.actor, "request_approval", self._facts(user, group))
         if not decision.allowed:
             return self._denied("request_approval", decision.rule_id, decision.reason)
+        self._acted_on = (user.id, group.id)
         needed = group.tier is Tier.RESTRICTED
         return ToolResult(
             ok=True,
@@ -247,6 +272,7 @@ class Gateway:
             "department_eligible": "yes" if eligible else "no",
             "approval": self._approval(user, group),
             "match_settled": "yes" if self.settled(user.id, group.id) else "no",
+            "second_pair": "yes" if self._acted_on not in (None, (user.id, group.id)) else "no",
         }
 
     def settled(self, user_id: str, group_id: str) -> bool:

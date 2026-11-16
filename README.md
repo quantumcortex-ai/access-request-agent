@@ -110,6 +110,8 @@ Level 1 is here. Levels 2 and 3 are planned and not built yet.
 - Policy rules in `policy/rules.toml`, deny by default.
 - A rule that refuses to act on a guess: the gateway acts only on a user and a group that the request's own words
   settled (`docs/adr/0003-act-only-on-a-match-the-request-settles.md`).
+- A rule that holds a request to one grant: once a run has acted on one person and one group, any other pair is
+  refused (`docs/adr/0004-one-grant-per-request.md`).
 - An audit log that can't be changed or deleted.
 - The workflow (`workflow.py`): the same steps every time, with the model called at two set points.
 - The agent (`agent.py`): the model picks its own next step, with the same tools.
@@ -150,6 +152,7 @@ python -m access_agent.eval --arm both --split dev          # the 26 dev tasks, 
 python -m access_agent.eval --arm both --repeats 3          # the 104 test tasks, three times each
 python -m access_agent.eval --report runs/<run id>          # print a finished run's table again
 python -m access_agent.eval --without-rule match-must-be-settled-by-the-request   # measure what one rule does
+python -m access_agent.eval --tasks tasks/dev-probes.jsonl --split dev      # hand-written injection probes
 ```
 
 Each run is saved under `runs/`. A run that stops can be continued with `--run-id`. Cost per completed task uses the

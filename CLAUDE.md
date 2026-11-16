@@ -20,13 +20,16 @@ QuantumCortex.AI agentic engineering series.
 
 ## Layout
 - `src/access_agent/gateway.py`: the one path every tool call takes (ADR 0001). It also works out whether the
-  request settled the user and the group (ADR 0003). That fact never comes from the model.
+  request settled the user and the group (ADR 0003) and which one pair the run has acted on (ADR 0004). Those
+  facts never come from the model.
 - `src/access_agent/policy.py` and `policy/rules.toml`: deny-by-default rules.
 - `src/access_agent/directory.py` and `seed.py`: the generated company.
 - `src/access_agent/audit.py`: the append-only log the eval reads.
 - `src/access_agent/workflow.py` and `agent.py`: the two arms (ADR 0002). `approval.py`: the pause for the owner.
 - `src/access_agent/tasks.py` builds `tasks/tasks.jsonl`. Labels come from how each case is built, never from running
   the gateway. After a change, run `python -m access_agent.tasks` and commit the file.
+- `tasks/dev-probes.jsonl`: hand-written dev requests for a problem the dev tasks didn't show. Never scored, and
+  never a copy of a test task.
 - `src/access_agent/eval.py`: runs the set and reports. Dev tasks are for debugging. Never adjust an arm against a
   test task.
 - `src/access_agent/llm.py`: the model client. Tests use `ScriptedModel`, never a live model.

@@ -8,6 +8,7 @@
 #   approval             owner | other | rejected | none | no_owner
 #   match_settled        yes | no    yes when the user and the group were each the only result of a
 #                                    search whose every word appears in the request
+#   second_pair         yes | no    yes when this run already acted on a different user and group
 # A rule with no `actors` applies to every actor.
 
 [[rule]]
@@ -23,6 +24,13 @@ effect = "deny"
 tools = ["add_to_group", "request_approval"]
 when = { match_settled = ["no"] }
 reason = "The request doesn't settle which user or group is meant. Search again using only words from the request, or ask the requester which they mean."
+
+[[rule]]
+id = "one-grant-per-request"
+effect = "deny"
+tools = ["add_to_group", "request_approval"]
+when = { second_pair = ["yes"] }
+reason = "A request adds one person to one group, and this run has already acted on a different pair. Finish with what was done."
 
 [[rule]]
 id = "privileged-groups-are-for-people"

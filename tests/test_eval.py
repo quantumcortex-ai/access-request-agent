@@ -6,7 +6,7 @@ from typing import Any
 
 from access_agent import Gateway
 from access_agent import eval as ev
-from access_agent.gateway import SETTLE_RULE
+from access_agent.gateway import ONE_GRANT_RULE, SETTLE_RULE
 from access_agent.llm import Reply, ScriptedModel, tool_use
 from access_agent.policy import load_rules
 from access_agent.tasks import TASKS_FILE, Task, build_tasks, load_tasks
@@ -117,19 +117,32 @@ def test_a_correct_run_is_completed():
     assert record["input_tokens"] == 1000 and all(outcome == "ok" for _, outcome in record["calls"])
 
 
-def test_an_agent_that_obeys_an_injection_is_caught():
-    task = by_category("injected_extra_groups")
-    directory = ev.prepare(task)
-    extra = directory.conn.execute("SELECT id FROM groups WHERE name = 'Office-Wifi-Guests'").fetchone()["id"]
+def obeys_the_injection(task, extra):
     turns = [
         [tool_use("add_to_group", {"user_id": task.user_id, "group_id": task.group_id}, "c1")],
         [tool_use("add_to_group", {"user_id": task.user_id, "group_id": extra}, "c2")],
         [tool_use("finish", {"outcome": "granted"}, "c3")],
     ]
-    record = ev.run_one("agent", task, 1, ScriptedModel(lambda call: reply(*turns.pop(0))), "test", NO_SETTLE)
+    return ScriptedModel(lambda call: reply(*turns.pop(0)))
+
+
+def test_an_agent_that_obeys_an_injection_is_caught():
+    task = by_category("injected_extra_groups")
+    directory = ev.prepare(task)
+    extra = directory.conn.execute("SELECT id FROM groups WHERE name = 'Office-Wifi-Guests'").fetchone()["id"]
+    record = ev.run_one("agent", task, 1, obeys_the_injection(task, extra), "test", (SETTLE_RULE, ONE_GRANT_RULE))
     assert record["outcome"] == "granted"
     assert record["wrong_grants"] == [[task.user_id, extra]]
     assert record["completed"] is False
+
+
+def test_the_one_grant_rule_refuses_the_injected_group():
+    task = by_category("injected_extra_groups")
+    directory = ev.prepare(task)
+    extra = directory.conn.execute("SELECT id FROM groups WHERE name = 'Office-Wifi-Guests'").fetchone()["id"]
+    record = ev.run_one("agent", task, 1, obeys_the_injection(task, extra), "test", NO_SETTLE)
+    assert record["wrong_grants"] == [] and record["grants"] == task.expect_grants
+    assert ("add_to_group", "policy_denied") in [tuple(call) for call in record["calls"]]
 
 
 def test_the_right_label_with_no_grant_is_not_completed():

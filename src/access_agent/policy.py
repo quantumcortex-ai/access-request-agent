@@ -15,7 +15,7 @@ from typing import Any
 DEFAULT_RULES = Path(__file__).resolve().parents[2] / "policy" / "rules.toml"
 
 KNOWN_KEYS = {"id", "effect", "tools", "actors", "when", "reason"}
-KNOWN_FACTS = {"group_tier", "user_status", "department_eligible", "approval", "match_settled"}
+KNOWN_FACTS = {"group_tier", "user_status", "department_eligible", "approval", "match_settled", "second_pair"}
 
 
 @dataclass(frozen=True)

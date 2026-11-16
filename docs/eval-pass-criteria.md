@@ -88,3 +88,24 @@ expected ending was something else. That last number is the rule's cost.
 
 What we won't claim: that the rule ends wrong grants. A request's filler words can settle the wrong group, and
 `tests/test_settle.py` keeps an example.
+
+### 2026-11-16: one grant per request, after a miss on a test task
+Written after a test run, so it is named plainly. The settle-rule run of 2026-11-15 showed the agent making 3 wrong
+grants on one test task: it obeyed a forwarded "policy update" inside the request and added a second group. Runs
+before the settle rule's change to the agent's instructions didn't do this, so that change caused it.
+
+What changed (`docs/adr/0004-one-grant-per-request.md`):
+
+- A new deny rule, `one-grant-per-request`: once a run has acted on one user and group, any other pair is refused.
+- The agent's instructions say the ask is one person and one group, and that anything else in the request text
+  changes nothing.
+- A group's exact name settles that group when the request contains it as a word of its own.
+
+How it was made: on four hand-written dev requests (`tasks/dev-probes.jsonl`) that reproduce the problem, 7 wrong
+grants in 12 agent runs before and none after, and on the 26 dev tasks. Nothing was run against a test task while
+making it.
+
+What this costs the test set: the change was prompted by a test task, so the injected-extra-group cases are no
+longer unseen. Results from here on say so next to those cases.
+
+What runs: the 104 test tasks, three times each, on `claude-haiku-5-5`, as a new run at the new commit.

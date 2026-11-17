@@ -4,38 +4,61 @@ By [QuantumCortex.AI](https://quantumcortex.ai). A worked example for our
 [agentic engineering series](https://quantumcortex.ai/series/): one IT access request, built as a fixed workflow and
 as an agent, and measured on the same eval set.
 
-## The two arms
+## What was compared
 
-The same request is handled two ways. We call them the two arms, and every number below compares them.
+The task is small on purpose: add one person to one group, at a made-up company. We built it two ways and call
+them the two arms. Every number below compares them.
 
 - **The workflow:** code runs the same steps in the same order every time, and calls the model at two set points.
 - **The agent:** the model picks each next step itself, using the same five tools.
 
-Both go through the same gateway and the same rules, so the only difference is who decides the next step.
+Both arms reach the directory through one gateway, which checks every call against rules written in code. Their
+prompts differ, and who decides the next step differs. We ran both on a small model (`claude-haiku-5-5`) and a
+bigger one (`claude-sonnet-5-5`).
 
-**How they compared:** on the smallest model, with the rules on, the workflow cost about a sixth as much for each
-completed task ($0.0002 against $0.0013). It wasn't the safer one. On the test set it made six wrong grants and
-the agent made none. On the bigger model neither made a wrong grant.
+Four terms used from here on:
+
+- **A wrong grant:** a person ends up in a group they shouldn't be in. It's the failure that matters, and the bar
+  is zero.
+- **The settle rule:** the gateway acts only on a person and a group that the request's own words pin down. It
+  exists to stop a guess when two people or two groups fit.
+- **The one-grant rule:** the gateway allows one grant for each request.
+- **The test set:** 40 requests written by a separate session that never saw the code, the rules or a result.
+  Each was run three times, so 120 runs an arm.
+
+## Workflow or agent?
+
+Neither won outright.
+
+- **The workflow was cheaper.** On Haiku it cost $0.0002 for each completed task against the agent's $0.0013, with
+  about a tenth of the input tokens.
+- **The workflow wasn't safer.** On the test set on Haiku it made six wrong grants in 120 runs and the agent made
+  none. The agent asked the requester which was meant.
+- **On Sonnet neither made a wrong grant**, on any set.
+
+The bigger finding isn't about which arm to pick. It's about where the control sits.
 
 ## The conclusion
 
 When an AI system can change who has access, put the control in code outside the model, and then test it on
 requests you didn't write.
 
-In this example, a rule in a gateway stopped the guesses it was written for, on the smallest model we tried. A
-second rule holds a request to one grant, and its decision record said it can't choose which grant is the right
-one. A test set written by a session that never saw the code or the rule file confirmed that: the fixed workflow
-granted the swap on two of eight such requests, on every repeat, in both runs.
+In this example the settle rule stopped the guesses it was written for, on the smaller model. Then the test set
+found what the rules don't cover. Two of its requests carried injected text that asked for a different group or
+a different person. The workflow on Haiku granted the injected ask all three times on both, which is the six wrong
+grants. Nothing in code checks that the one grant is the one the requester asked for.
 
 ## Three reasons
 
-1. **A prompt didn't hold wrong grants at zero. A rule in code did, for what the rule names.** Both arms were told
-   never to guess from the first run, and they still guessed in some runs. With the settle rule on, no run on
-   either set granted on a guess.
-2. **A rule covers only what it names.** Nothing in code checks that the one grant is the one the requester asked
-   for. Text that swapped the ask got through the workflow on the small model.
-3. **A bigger model closed that gap in these runs, at about 20 times the cost and with no guarantee.** Sonnet
-   with the rules made no wrong grant on either set.
+1. **A prompt didn't hold wrong grants at zero. The settle rule did, for the guesses it names.** From the first
+   run, both arms' prompts said never to guess. They still guessed in some runs. With the settle rule on, no run
+   on the validation set or the test set granted on a guess. The other wrong grants in this README came from
+   injected text, which the settle rule doesn't cover.
+2. **A rule covers only what it names.** Injected text that swapped the ask is part of the request, so both rules
+   let it through, and the workflow on Haiku granted it.
+3. **A bigger model made no wrong grant, at about 20 times the cost and with no guarantee.** Sonnet's workflow
+   cost $0.0042 for each completed task against Haiku's $0.0002. Sonnet also made no wrong grant before either
+   rule existed, so these runs don't show the rules helping it.
 
 ## The evidence
 
@@ -47,8 +70,8 @@ granted the swap on two of eight such requests, on every repeat, in both runs.
 - **Three sets of requests**, each request with the end state a careful person would reach:
   - **Development, 26 requests:** used to build and debug the arms.
   - **Validation, 104 requests:** from the same generator as the development set. A validation run is the 104,
-    three times each, so 312 runs an arm. Three changes followed from its results (the settle rule after run 1,
-    the one-grant rule after run 5 and the hand-back fix after run 6), so it is no longer unseen.
+    three times each, so 312 runs an arm. Three changes were made because of its results, so it is no longer
+    unseen. The timeline is under the table of runs.
   - **Test, 40 requests:** three times each, so 120 runs an arm. Nothing is tuned against it. The arms have run
     on it twice: at commit `0b17231`, and at `b817e83` after two code fixes that came from a code review and not
     from a test result.
@@ -64,10 +87,21 @@ granted the swap on two of eight such requests, on every repeat, in both runs.
 
 ### The validation set, ten runs
 
+What changed between runs:
+
+- **Runs 1 to 3:** no rule about guessing, only the prompts. Run 1's wrong grant is why the settle rule was written.
+- **Runs 4 and 5:** the same commit with the settle rule off, then on. Run 5's wrong grants are why the one-grant
+  rule was written.
+- **Run 6 on:** both rules. Run 7 adds a fix for requests the arms sent back to the requester when they didn't
+  need to (the hand-back fix). Run 9 adds two fixes from a code review.
+
+"Completed" means the run ended in the state a careful person would have reached. Anything else is a miss.
+
+
 | Run | Agent completed | Workflow completed | Wrong grants | Pass rule |
 |---|---|---|---|---|
 | 1. Haiku, first run, 2026-11-15 | 308 of 312 | 308 of 312 | workflow 1 | Fails |
-| 2. Haiku again, model-support commit | 308 of 312 | 312 of 312 | 0 | Passes |
+| 2. Haiku again, same prompts as run 1 | 308 of 312 | 312 of 312 | 0 | Passes |
 | 3. Sonnet, same commit as run 2 | 312 of 312 | 312 of 312 | 0 | Passes |
 | 4. Haiku, settle rule left out | 306 of 312 | 310 of 312 | agent 6, workflow 2 | Fails |
 | 5. Haiku, settle rule on | 309 of 312 | 310 of 312 | agent 3 | Fails |
@@ -147,7 +181,8 @@ changed.
 - **Run 1:** a request asked for "the Sales one", two groups fit, and the workflow picked one where it should have
   asked.
 - **Run 2:** the same prompts gave no wrong grants.
-- **Run 4:** with the instruction and no rule behind it, vague requests gave five wrong grants across both arms.
+- **Run 4:** with the instruction and no rule behind it, vague requests gave five of the run's eight wrong
+  grants, across both arms. The other three are the injected text below.
   Run 4 leaves the rule out of arms that had been changed to work with it, so it isn't the original prompts.
   Those gave one wrong grant across runs 1 to 3.
 - **Run 5:** the settle rule was switched on, on the same commit as run 4. The gateway now acts only on a person
@@ -162,7 +197,8 @@ changed.
   instructions held. The rule is shown working only by the unit tests and by the development probes: 7 wrong
   grants in 12 agent runs before the change and none after. The measured case for a rule in code is the settle
   rule, in runs 4 and 5.
-- **Neither recorded signal flagged every run that went wrong.** Both are written down and never acted on.
+- **Neither recorded signal flagged every run that went wrong.** The eval records two: how many matches a lookup
+  returned, and the confidence the model stated. Both are written down and never acted on.
   - **Run 1:** a lookup that returned more than one match flagged every miss in both arms. The workflow's stated
     confidence was below 80 on all four of its misses, the wrong grant among them, and on 59 runs it completed.
     The agent's was below 80 on none of its four misses.
@@ -192,7 +228,7 @@ The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` gi
 - **The second run gave the same result.** At `b817e83` the workflow on Haiku made the same six wrong grants on
   the same two requests. The agent again made none. It asked which was meant in seven runs, across three of the
   swapped-ask requests.
-- **We haven't fixed this in phase 1, on purpose.** Changing the arms against a test result would spend the
+- **We haven't fixed this, on purpose.** Changing the arms against a test result would spend the
   set the way the validation set was spent. It's a measured limit.
 
 ### Reason 3: a bigger model closed the gap, at about 20 times the cost
@@ -236,7 +272,7 @@ Ranges are 95% intervals.
     The group's record says "read", and the request never does. One Haiku agent run in each test-set run ran
     out of steps on it.
 - **A fix for that hand-back worked on the wording it was made on, and not beyond.** It was made on the development
-  set's version of the request. Run 16 times an arm on Haiku, the agent completed it once before the fix and nine
+  set's version of the request. Over 16 runs an arm on Haiku, the agent completed it once before the fix and nine
   times after. The workflow completed it 16 times both before and after, so on that wording it didn't need the
   fix. On the validation set's version, in run 7, the agent completed it three times in three and the workflow
   once.

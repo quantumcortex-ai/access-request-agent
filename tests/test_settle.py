@@ -54,6 +54,36 @@ def test_a_search_is_grounded_when_every_word_is_in_the_request():
     assert grounded("(Legal)", request)  # punctuation at the edges doesn't count
 
 
+def test_a_word_inside_a_longer_word_is_not_in_the_request():
+    request = "Dana Okafor needs the new laptops list and the Finance-Reports group. Thanks, Carter's team"
+    assert not grounded("ops", request)
+    assert not grounded("report", request)
+    assert grounded("laptops", request)
+    assert grounded("finance reports", request)  # a hyphen ends a word
+    assert grounded("carter", request)  # so does an apostrophe
+
+
+def test_a_new_gateway_for_the_same_request_keeps_what_was_settled(directory):
+    request = "Please add Sam Carter from Sales to the sales team group"
+    first = gateway_for(directory, request)
+    user = first.call("lookup_user", {"query": "Sam Carter", "department": "Sales"}, task_id="t")
+    group = first.call("find_groups", {"query": "sales team"}, task_id="t")
+    assert user.data["settled"] and group.data["settled"]
+    user_id, group_id = user.data["users"][0]["id"], group.data["groups"][0]["id"]
+    assert first.call("add_to_group", {"user_id": user_id, "group_id": group_id}, task_id="t").ok
+
+    again = gateway_for(directory, request)
+    assert again.settled(user_id, group_id)
+    assert again._acted_on == (user_id, group_id)
+    other = gid(directory, "Sales-Forecast-Readers")
+    again.call("find_groups", {"query": "Sales-Forecast-Readers"}, task_id="t")
+    refused = again.call("add_to_group", {"user_id": user_id, "group_id": other}, task_id="t")
+    assert refused.error is ErrorCode.POLICY_DENIED
+
+    # A different request starts with nothing settled.
+    assert not gateway_for(directory, "Something else entirely").settled(user_id, group_id)
+
+
 def test_a_search_with_a_word_the_request_lacks_is_not_grounded():
     request = "Can vik.abbott@larkspur-freight.example be added to the Sales one today?"
     assert not grounded("Sales-Team", request)

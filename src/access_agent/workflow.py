@@ -17,7 +17,7 @@ from typing import Any, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from .approval import ask_owner
-from .gateway import SETTLE_RULE, Gateway
+from .gateway import SETTLE_RULE, Gateway, in_request
 from .llm import Model
 from .models import Outcome, confidence_of
 
@@ -225,8 +225,8 @@ def build_workflow(gateway: Gateway, model: Model, checkpointer: Any = None) -> 
             about = f"{group['name']} {group['description']}".lower()
             given = [w.strip(".,;:!?()[]'\"") for w in str(picked.get("group_words") or "").lower().split()]
             # A word the request doesn't contain would spoil the search, so it is left out too.
-            asked = state["request"].lower()
-            words = " ".join(dict.fromkeys(w for w in given if len(w) >= 2 and w in about and w in asked))
+            asked = state["request"]
+            words = " ".join(dict.fromkeys(w for w in given if len(w) >= 2 and w in about and in_request(w, asked)))
             if words:
                 gateway.call("find_groups", {"query": words}, task_id=state["task_id"])
         return update | {"user_id": user_id, "group_id": group_id}

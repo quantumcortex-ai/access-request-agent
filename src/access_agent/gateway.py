@@ -6,7 +6,9 @@ The workflow and the agent both call tools through here, so both are held to
 the same rules and measured from the same log.
 
 The gateway also remembers two things about the run, as facts for the policy.
-Both are worked out here and never taken from the model:
+Both are worked out here and never taken from the model. Both are kept in the
+directory's database, so a request that pauses for an approval can be picked
+up by a new process:
 
 - which users and groups the request itself settled: each was the only result
   of a search whose every word appears in the request;
@@ -48,10 +50,34 @@ def _words(query: str) -> list[str]:
     return [word for word in words if word]
 
 
+def in_request(word: str, request: str | None) -> bool:
+    """Does the request contain this word as a word of its own?
+
+    "ops" is not in a request that says "laptops". A letter or a digit on either
+    side makes it part of a longer word. A hyphen, a dot or an apostrophe doesn't,
+    so "finance" is in "Finance-Reports" and "carter" is in "Carter's".
+    """
+    if not request or not word:
+        return False
+    return re.search(rf"(?<![a-z0-9]){re.escape(word.lower())}(?![a-z0-9])", request.lower()) is not None
+
+
 def outside_request(query: str, request: str | None) -> list[str]:
     """The words of this search that the request doesn't contain."""
-    text = (request or "").lower()
-    return [word for word in _words(query) if word not in text]
+    return [word for word in _words(query) if not in_request(word, request)]
+
+
+# What the gateway remembers about one request. It is keyed by the run and the request's
+# text, so a new gateway for the same request finds what the first one worked out.
+STATE_SCHEMA = """
+CREATE TABLE IF NOT EXISTS request_state (
+    run_id TEXT NOT NULL,
+    request TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    value TEXT NOT NULL,
+    PRIMARY KEY (run_id, request, kind, value)
+);
+"""
 
 
 def grounded(query: str, request: str | None) -> bool:
@@ -114,6 +140,8 @@ class Gateway:
         self._settled_groups: set[str] = set()
         # The one user and group this run has acted on, once it has.
         self._acted_on: tuple[str, str] | None = None
+        directory.conn.executescript(STATE_SCHEMA)
+        self._recall()
         self.rules = rules if rules is not None else load_rules()
         self.audit = AuditLog(directory.conn)
         self._handlers: dict[str, Callable[[Any], ToolResult]] = {
@@ -123,6 +151,35 @@ class Gateway:
             "add_to_group": self._add_to_group,
             "request_approval": self._request_approval,
         }
+
+    def _recall(self) -> None:
+        """Read back what an earlier gateway worked out for this run and request."""
+        if self.request is None:
+            return
+        rows = self.directory.conn.execute(
+            "SELECT kind, value FROM request_state WHERE run_id = ? AND request = ?", (self.run_id, self.request)
+        ).fetchall()
+        for row in rows:
+            if row["kind"] == "user":
+                self._settled_users.add(row["value"])
+            elif row["kind"] == "group":
+                self._settled_groups.add(row["value"])
+            elif row["kind"] == "acted_on":
+                user_id, group_id = row["value"].split(" ")
+                self._acted_on = (user_id, group_id)
+
+    def _remember(self, kind: str, value: str) -> None:
+        if self.request is None:
+            return
+        self.directory.conn.execute(
+            "INSERT OR IGNORE INTO request_state VALUES (?, ?, ?, ?)", (self.run_id, self.request, kind, value)
+        )
+        self.directory.conn.commit()
+
+    def _act_on(self, user_id: str, group_id: str) -> None:
+        # The rule has already refused any other pair, so this is the first pair or the same one.
+        self._acted_on = (user_id, group_id)
+        self._remember("acted_on", f"{user_id} {group_id}")
 
     def call(self, tool: str, args: dict[str, Any], *, task_id: str) -> ToolResult:
         """Run one tool call and record it, whatever happens."""
@@ -175,6 +232,7 @@ class Gateway:
         settled = len(users) == 1 and from_request
         if settled:
             self._settled_users.add(users[0].id)
+            self._remember("user", users[0].id)
         return ToolResult(
             ok=True,
             tool="lookup_user",
@@ -195,6 +253,7 @@ class Gateway:
         settled = len(groups) == 1 and grounded(args.query, self.request)
         if settled:
             self._settled_groups.add(groups[0].id)
+            self._remember("group", groups[0].id)
         data: dict[str, Any] = {"groups": [_public_group(g) for g in groups], "settled": settled}
         # Say why a search didn't settle, so the caller can drop the word that spoiled it
         # instead of giving up. This changes nothing about what counts as settled.
@@ -226,7 +285,7 @@ class Gateway:
         decision = decide(self.rules, self.actor, "add_to_group", facts)
         if not decision.allowed:
             return self._denied("add_to_group", decision.rule_id, decision.reason)
-        self._acted_on = (user.id, group.id)
+        self._act_on(user.id, group.id)
         already = self.directory.is_member(user.id, group.id)
         if not already:
             self.directory.add_member(user.id, group.id, added_by=self.actor)
@@ -254,7 +313,7 @@ class Gateway:
         decision = decide(self.rules, self.actor, "request_approval", self._facts(user, group))
         if not decision.allowed:
             return self._denied("request_approval", decision.rule_id, decision.reason)
-        self._acted_on = (user.id, group.id)
+        self._act_on(user.id, group.id)
         needed = group.tier is Tier.RESTRICTED
         return ToolResult(
             ok=True,

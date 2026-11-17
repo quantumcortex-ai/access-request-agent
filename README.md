@@ -144,30 +144,8 @@ The same at `b817e83`:
 | Groups with close names | 21 of 24 | 21 of 24 | 21 of 24 | 21 of 24 |
 | Claimed approvals, exceptions and emergencies | 18 of 18 | 18 of 18 | 18 of 18 | 18 of 18 |
 
-Each run's report and records are in `results/`:
-
-| Run | Folder in `results/` |
-|---|---|
-| 1 | `2026-11-15-haiku` |
-| 2 | `2026-11-15-haiku-rerun` |
-| 3 | `2026-11-15-sonnet` |
-| 4 | `2026-11-15-haiku-settle-rule-off` |
-| 5 | `2026-11-15-haiku-settle-rule-on` |
-| 6 | `2026-11-16-haiku` |
-| 7 | `2026-11-16-0b17231-haiku-validation` |
-| 8 | `2026-11-16-0b17231-sonnet-validation` |
-| 9 | `2026-11-16-b817e83-haiku-validation` |
-| 10 | `2026-11-16-b817e83-sonnet-validation` |
-| Test set at `0b17231`, Haiku | `2026-11-16-0b17231-haiku-test` |
-| Test set at `0b17231`, Sonnet | `2026-11-16-0b17231-sonnet-test` |
-| Test set at `b817e83`, Haiku | `2026-11-16-b817e83-haiku-test` |
-| Test set at `b817e83`, Sonnet | `2026-11-16-b817e83-sonnet-test` |
-| Finance reports request, before the hand-back fix | `2026-11-16-9dec77f-haiku-finance-reports-before` |
-| Finance reports request, after it | `2026-11-16-0b17231-haiku-finance-reports-after` |
-| Development probes, before the one-grant rule | `2026-11-16-haiku-probes-before-one-grant-rule` |
-| Development probes, after it | `2026-11-16-haiku-probes-after-one-grant-rule` |
-| Development tasks at `b817e83` | `2026-11-16-b817e83-haiku-development` |
-| Development probes at `b817e83` | `2026-11-16-b817e83-haiku-probes` |
+Each run's report and records are in `results/`. [`results/README.md`](results/README.md) says which folder is
+which run.
 
 `docs/eval-pass-criteria.md` has a dated note for every change made between runs. The labels in all three sets
 rest on the requirements in `docs/requirements.md`, which the maintainer approved on 2026-11-16. The requirements
@@ -197,14 +175,6 @@ changed.
   instructions held. The rule is shown working only by the unit tests and by the development probes: 7 wrong
   grants in 12 agent runs before the change and none after. The measured case for a rule in code is the settle
   rule, in runs 4 and 5.
-- **Neither recorded signal flagged every run that went wrong.** The eval records two: how many matches a lookup
-  returned, and the confidence the model stated. Both are written down and never acted on.
-  - **Run 1:** a lookup that returned more than one match flagged every miss in both arms. The workflow's stated
-    confidence was below 80 on all four of its misses, the wrong grant among them, and on 59 runs it completed.
-    The agent's was below 80 on none of its four misses.
-  - **The test set, on Haiku:** the workflow's confidence was below 70 on all six wrong grants, and on 20 other
-    runs. The lookup count flagged none of the six. The second run was the same: all six, and 21 other runs.
-  - That's a handful of misses, so we draw no threshold from it.
 
 The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` give the reasons for each.
 
@@ -277,6 +247,18 @@ Ranges are 95% intervals.
   fix. On the validation set's version, in run 7, the agent completed it three times in three and the workflow
   once.
 
+### Two signals we recorded and didn't act on
+
+The eval records how many matches a lookup returned, and the confidence the model stated. Neither flagged every
+run that went wrong.
+
+- **Run 1:** a lookup that returned more than one match flagged every miss in both arms. The workflow's stated
+  confidence was below 80 on all four of its misses, the wrong grant among them, and on 59 runs it completed.
+  The agent's was below 80 on none of its four misses.
+- **The test set, on Haiku:** the workflow's confidence was below 70 on all six wrong grants, and on 20 other
+  runs. The lookup count flagged none of the six. The second run was the same: all six, and 21 other runs.
+- That's a handful of misses, so we draw no threshold from it.
+
 ### What this doesn't show
 
 - **Anything about real service-desk requests.** Every request here is generated, on a fictional company. See "What
@@ -329,6 +311,10 @@ flowchart TB
 
 - **The workflow** (`workflow.py`) runs the same steps every time and calls the model at two set points.
 - **The agent** (`agent.py`) lets the model pick each next step.
+- **The prompts are in the code**, as they stand at the last commit: `SYSTEM` in `agent.py`, and `EXTRACT_SYSTEM`
+  and `CHOOSE_SYSTEM` in `workflow.py`. They changed between runs:
+  `docs/eval-pass-criteria.md` has a dated note for each change, and `git log -p` on those two files shows every
+  version.
 - **The gateway** is the only way a tool call reaches the directory. Policy is deny by default. The approval step
   writes the owner's answer to the directory itself.
 - **Facts come from the directory.** Nothing the model says counts as one.

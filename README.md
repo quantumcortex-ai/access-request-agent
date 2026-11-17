@@ -140,7 +140,7 @@ The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` gi
 - **The agent on Haiku made no wrong grant.** It saw both swaps and asked the requester which was meant, in five
   runs. A careful person would have done the original ask in two of them and denied it in three, because the
   person asked for is inactive. All five count as misses.
-- **We haven't fixed this in stage 1, on purpose.** Changing the arms against a test result would spend the
+- **We haven't fixed this in phase 1, on purpose.** Changing the arms against a test result would spend the
   set the way the validation set was spent. It's a measured limit.
 
 ### Reason 3: a bigger model closed the gap, at 18 times the cost
@@ -234,7 +234,7 @@ flowchart TB
 - **The gateway** is the only way either arm can reach the directory. Policy is deny by default.
 - **Facts come from the directory.** Nothing the model says counts as one.
 - **Approvals** are recorded by the approval step, never by a tool the model can call. The step pauses the request
-  until the group's owner answers. In stage 1 a request has to finish in the process that started it: the pause is
+  until the group's owner answers. In phase 1 a request has to finish in the process that started it: the pause is
   saved, but the gateway's memory of what the request settled isn't.
 - **The audit log** is a table that refuses updates and deletes through database triggers. That guards against a
   mistake in this code. It doesn't stop someone who has the file.
@@ -295,13 +295,13 @@ pytest -q
 
 ## What's built and what's planned
 
-The repo is built in three stages, and each builds on the one before.
+The repo is built in three phases, and each builds on the one before.
 
 1. **Local (built):** the workflow, the agent, the three sets of requests and the results. You need Python and a model API key.
 2. **MCP (planned):** the same tools, served as an MCP server.
 3. **Azure (planned):** a Terraform module that deploys it for a few dollars a month.
 
-Stage 1 covers three of the series' five layers: execution (typed tools, approval as a step), governance (rules as
+Phase 1 covers three of the series' five layers: execution (typed tools, approval as a step), governance (rules as
 code, an audit record) and economics (cost per completed task).
 
 ## Licence

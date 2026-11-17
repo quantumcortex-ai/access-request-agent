@@ -45,4 +45,4 @@ record had already named. It didn't discover it.
 The test set (`tasks/test.jsonl`) measured both sides of this rule. On ten requests that try to add a second
 group or person, neither arm made a wrong grant on either model. On eight requests that swap the ask for a different
 group or person, the workflow on `claude-haiku-5-5` granted the swap in six of 24 runs. This rule doesn't choose the
-first grant, so it can't stop that. Nothing in stage 1 was changed in response.
+first grant, so it can't stop that. Nothing in phase 1 was changed in response.

@@ -30,7 +30,7 @@ below 80 on all four of its misses and on 59 runs it completed, and the agent's 
   to the Sales one" contains "access", which matches only one of the two Sales groups. A caller that searches
   "access sales" gets a settled match the request didn't give. `tests/test_settle.py` keeps that case visible.
 - The check for "appears in the request" looks for the word anywhere in the text, so "ops" counts as present in
-  a request that says "laptops". It is left as it is in stage 1 because the published
+  a request that says "laptops". It is left as it is in phase 1 because the published
   runs were made on it.
 - The rule depends on how search works here: every word must match a group's name or description. A directory with
   fuzzier search would need a different test of "settled".

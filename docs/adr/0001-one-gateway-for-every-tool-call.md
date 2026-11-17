@@ -23,7 +23,7 @@ not.
 
 ## Consequences
 - First-try tool-call success is counted at the gateway, from the audit table, the same way for both arms.
-- A framework change, or serving the tools over MCP in stage 2, doesn't move the rules or the measurement.
+- A framework change, or serving the tools over MCP in phase 2, doesn't move the rules or the measurement.
 - Policy rules stay simple: lists of allowed values per fact. A richer policy language can replace `decide` later
   without touching the tools.
 - The gateway is the one place a bug could grant access wrongly, so it carries the most tests.

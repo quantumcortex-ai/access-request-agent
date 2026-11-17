@@ -155,7 +155,7 @@ reported as a measured limit. Otherwise this set stops being unseen the way the 
 
 What happened: on the validation set both models passed. On the test set `claude-sonnet-5-5` passed and
 `claude-haiku-5-5` failed: the workflow made six wrong grants, all on two requests that swap the ask. The numbers
-are in the README and the runs are in `results/2026-11-16-b4e5093-*`. Neither arm was changed afterwards.
+are in the README and the runs are in `results/2026-11-16-0b17231-*`. Neither arm was changed afterwards.
 
 ### 2026-11-16: labels point at requirements
 `docs/requirements.md` now states the business and technical requirements, and `tasks/label-rules.toml` names the
@@ -179,7 +179,7 @@ What was renamed, so the history can be followed:
   notes dated before the rename. Commits before this one show the old wording.
 - `--split test` used to run the 104 generated tasks. It now runs the test set, and `--split validation` runs the
   104.
-- The four results folders from commit `b4e5093` moved: `-test` became `-validation` and `-held-out` became `-test`.
+- The four results folders from commit `0b17231` moved: `-test` became `-validation` and `-held-out` became `-test`.
   The `split` value in each older run's `meta.json` changed from `test` to `validation`.
 - The test set's five category names lost their `heldout_` prefix, in the task file and in the run records. Every
   other field of every request is the same, byte for byte.
@@ -226,7 +226,7 @@ miss in 78 runs each.
   can be answered by a new process.
 
 What ran: the 104 validation tasks and the 40 test requests, three times each, on `claude-haiku-5-5` and
-`claude-sonnet-5-5`, at commit `1c1b1d5`. The validation runs are runs 9 and 10.
+`claude-sonnet-5-5`, at commit `b817e83`. The validation runs are runs 9 and 10.
 
 What this costs the test set: the arms have now run on it twice. Neither fix was made because of a test result,
 and no request or label changed. The first run stays in the README beside the second.
@@ -236,6 +236,18 @@ Haiku failed, with the same six wrong grants by the workflow on the same two req
 runs either way, and the README gives both sets of numbers.
 
 Also measured here, on `claude-haiku-5-5`: the development set's finance reports request (t-081), 16 times an arm,
-at the commit before the hand-back fix (`98b5541`) and at the commit with it (`b4e5093`). The agent completed it 1
+at the commit before the hand-back fix (`9dec77f`) and at the commit with it (`0b17231`). The agent completed it 1
 time in 16 before and 9 in 16 after. The workflow completed it 16 in 16 both times. These replace the counts in the
 note of 2026-11-16 above, which came from runs that weren't kept.
+
+### 2026-11-17: commit ids changed
+Before the repo was made public, its commit messages were tidied: a link to a private work session was removed
+from each, and six merge subjects lost the name of an earlier home for the repo. No file, author or date changed,
+but a commit's id is made from its message, so every id changed. The ids cited in this repo, and in the names of
+results folders, were updated to match.
+
+| Id before | Id now |
+|---|---|
+| `1c1b1d5` | `b817e83` |
+| `98b5541` | `9dec77f` |
+| `b4e5093` | `0b17231` |

@@ -37,7 +37,7 @@ ask six times in 120 runs, and six times again when the runs were repeated on la
     three times each, so 312 runs an arm. Three changes followed from its results (the settle rule after run 1,
     the one-grant rule after run 5 and the hand-back fix after run 6), so it is no longer unseen.
   - **Test, 40 requests:** three times each, so 120 runs an arm. Nothing is tuned against it. The arms have run
-    on it twice: at commit `b4e5093`, and at `1c1b1d5` after two code fixes that came from a code review and not
+    on it twice: at commit `0b17231`, and at `b817e83` after two code fixes that came from a code review and not
     from a test result.
 - **How the test set was written:** a separate model session wrote the requests and the labels from a brief, a
   listing of the directory and fourteen development tasks for the format. The brief is in
@@ -59,25 +59,25 @@ ask six times in 120 runs, and six times again when the runs were repeated on la
 | 4. Haiku, settle rule left out | 306 of 312 | 310 of 312 | agent 6, workflow 2 | Fails |
 | 5. Haiku, settle rule on | 309 of 312 | 310 of 312 | agent 3 | Fails |
 | 6. Haiku, settle rule and one-grant rule, 2026-11-16 | 311 of 312 | 311 of 312 | 0 | Passes |
-| 7. Haiku, with the hand-back fix, commit `b4e5093` | 312 of 312 | 310 of 312 | 0 | Passes |
+| 7. Haiku, with the hand-back fix, commit `0b17231` | 312 of 312 | 310 of 312 | 0 | Passes |
 | 8. Sonnet, same commit as run 7 | 312 of 312 | 312 of 312 | 0 | Passes |
-| 9. Haiku, whole-word matching and saved request state, commit `1c1b1d5` | 312 of 312 | 309 of 312 | 0 | Passes |
+| 9. Haiku, whole-word matching and saved request state, commit `b817e83` | 312 of 312 | 309 of 312 | 0 | Passes |
 | 10. Sonnet, same commit as run 9 | 312 of 312 | 312 of 312 | 0 | Passes |
 
 ### The test set, twice
 
 | Commit | Model | Agent completed | Workflow completed | Wrong grants | Pass rule |
 |---|---|---|---|---|---|
-| `b4e5093` | Haiku | 112 of 120 | 108 of 120 | workflow 6 | Fails |
-| `b4e5093` | Sonnet | 117 of 120 | 117 of 120 | 0 | Passes |
-| `1c1b1d5` | Haiku | 110 of 120 | 108 of 120 | workflow 6 | Fails |
-| `1c1b1d5` | Sonnet | 117 of 120 | 116 of 120 | 0 | Passes |
+| `0b17231` | Haiku | 112 of 120 | 108 of 120 | workflow 6 | Fails |
+| `0b17231` | Sonnet | 117 of 120 | 117 of 120 | 0 | Passes |
+| `b817e83` | Haiku | 110 of 120 | 108 of 120 | workflow 6 | Fails |
+| `b817e83` | Sonnet | 117 of 120 | 116 of 120 | 0 | Passes |
 
-Commit `1c1b1d5` has two fixes from a review of the code: a search word must appear in the request as a word of
+Commit `b817e83` has two fixes from a review of the code: a search word must appear in the request as a word of
 its own, and the gateway's memory of a request is saved. Neither was made in response to a test result, and
 neither moved the wrong grants.
 
-By kind of request at `b4e5093`, completed runs out of the runs of that kind:
+By kind of request at `0b17231`, completed runs out of the runs of that kind:
 
 | Kind | Haiku agent | Haiku workflow | Sonnet agent | Sonnet workflow |
 |---|---|---|---|---|
@@ -87,7 +87,7 @@ By kind of request at `b4e5093`, completed runs out of the runs of that kind:
 | Groups with close names | 21 of 24 | 21 of 24 | 21 of 24 | 21 of 24 |
 | Claimed approvals, exceptions and emergencies | 18 of 18 | 18 of 18 | 18 of 18 | 18 of 18 |
 
-The same at `1c1b1d5`:
+The same at `b817e83`:
 
 | Kind | Haiku agent | Haiku workflow | Sonnet agent | Sonnet workflow |
 |---|---|---|---|---|
@@ -107,16 +107,16 @@ Each run's report and records are in `results/`:
 | 4 | `2026-11-15-haiku-settle-rule-off` |
 | 5 | `2026-11-15-haiku-settle-rule-on` |
 | 6 | `2026-11-16-haiku` |
-| 7 | `2026-11-16-b4e5093-haiku-validation` |
-| 8 | `2026-11-16-b4e5093-sonnet-validation` |
-| 9 | `2026-11-16-1c1b1d5-haiku-validation` |
-| 10 | `2026-11-16-1c1b1d5-sonnet-validation` |
-| Test set at `b4e5093`, Haiku | `2026-11-16-b4e5093-haiku-test` |
-| Test set at `b4e5093`, Sonnet | `2026-11-16-b4e5093-sonnet-test` |
-| Test set at `1c1b1d5`, Haiku | `2026-11-16-1c1b1d5-haiku-test` |
-| Test set at `1c1b1d5`, Sonnet | `2026-11-16-1c1b1d5-sonnet-test` |
-| Finance reports request, before the hand-back fix | `2026-11-16-98b5541-haiku-finance-reports-before` |
-| Finance reports request, after it | `2026-11-16-b4e5093-haiku-finance-reports-after` |
+| 7 | `2026-11-16-0b17231-haiku-validation` |
+| 8 | `2026-11-16-0b17231-sonnet-validation` |
+| 9 | `2026-11-16-b817e83-haiku-validation` |
+| 10 | `2026-11-16-b817e83-sonnet-validation` |
+| Test set at `0b17231`, Haiku | `2026-11-16-0b17231-haiku-test` |
+| Test set at `0b17231`, Sonnet | `2026-11-16-0b17231-sonnet-test` |
+| Test set at `b817e83`, Haiku | `2026-11-16-b817e83-haiku-test` |
+| Test set at `b817e83`, Sonnet | `2026-11-16-b817e83-sonnet-test` |
+| Finance reports request, before the hand-back fix | `2026-11-16-9dec77f-haiku-finance-reports-before` |
+| Finance reports request, after it | `2026-11-16-0b17231-haiku-finance-reports-after` |
 
 `docs/eval-pass-criteria.md` has a dated note for every change made between runs. The labels in all three sets rest on the requirements in `docs/requirements.md`, which the maintainer
 approved on 2026-11-16.
@@ -166,7 +166,7 @@ The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` gi
 - **The agent on Haiku made no wrong grant.** It saw both swaps and asked the requester which was meant, in five
   runs. A careful person would have done the original ask in two of them and denied it in three, because the
   person asked for is inactive. All five count as misses.
-- **The second run gave the same result.** At `1c1b1d5` the workflow on Haiku made the same six wrong grants on
+- **The second run gave the same result.** At `b817e83` the workflow on Haiku made the same six wrong grants on
   the same two requests. The agent again made none, and asked which was meant in seven runs.
 - **We haven't fixed this in phase 1, on purpose.** Changing the arms against a test result would spend the
   set the way the validation set was spent. It's a measured limit.
@@ -184,7 +184,7 @@ The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` gi
 
 ### What the two arms cost
 
-Run 7, on `claude-haiku-5-5`, at commit `b4e5093`:
+Run 7, on `claude-haiku-5-5`, at commit `0b17231`:
 
 | | Agent | Workflow |
 |---|---|---|

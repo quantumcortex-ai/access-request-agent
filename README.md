@@ -9,20 +9,20 @@ as an agent, and measured on the same eval set.
 When an AI system can change who has access, put the control in code outside the model, and then test it on
 requests you didn't write.
 
-In this example, two rules in a gateway ended the wrong grants they were written for, on the smallest model we
-tried. The decision record for one of those rules said it can't choose which grant is the right one. A test set
-written by a session that never saw the rules confirmed that and measured it: the fixed workflow granted a swapped
-ask six times in 120 runs, and six times again when the runs were repeated on later code.
+In this example, a rule in a gateway stopped the guesses it was written for, on the smallest model we tried. A
+second rule holds a request to one grant, and its decision record said it can't choose which grant is the right
+one. A test set written by a session that never saw the code or the rule file confirmed that: the fixed workflow
+granted the swap on two of eight such requests, on every repeat, in both runs.
 
 ## Three reasons
 
 1. **A prompt didn't hold wrong grants at zero. A rule in code did, for what the rule names.** Both arms were told
-   never to guess from the first run, and they still guessed in some runs. With the rules in place, no run on
-   either set granted on a guess or added a second group.
+   never to guess from the first run, and they still guessed in some runs. With the settle rule on, no run on
+   either set granted on a guess.
 2. **A rule covers only what it names.** Nothing in code checks that the one grant is the one the requester asked
    for. Text that swapped the ask got through the workflow on the small model.
-3. **A bigger model closed that gap in these runs, at 18 times the cost and with no guarantee.** Sonnet with the
-   rules made no wrong grant on either set.
+3. **A bigger model closed that gap in these runs, at about 20 times the cost and with no guarantee.** Sonnet
+   with the rules made no wrong grant on either set.
 
 ## The evidence
 
@@ -43,13 +43,13 @@ ask six times in 120 runs, and six times again when the runs were repeated on la
   listing of the directory and fourteen development tasks for the format. The brief is in
   `docs/test-set-brief.md`. It states the policy a careful person follows and names the five kinds of request to
   write. The session that built the arms wrote the brief, so the kinds were chosen by someone who knew the rules.
-  The writing session never saw the code, the two rules, the prompts or a result, and the file was committed
-  before either arm ran on it. Its ids start `h-` because the set was first called held-out.
+  The writing session never saw the code, the rule file, the prompts or a result. Its brief did state the policy
+  the two rules enforce, in plain words. The file was committed before either arm ran on it. Its ids start `h-` because the set was first called held-out.
 - **A wrong grant:** the person ends up in a group that the careful person wouldn't have put them in.
 - **The pass rule:** zero wrong grants in both arms. It was written down before the first run, in
   `docs/eval-pass-criteria.md`.
 
-### The validation set, eight runs
+### The validation set, ten runs
 
 | Run | Agent completed | Workflow completed | Wrong grants | Pass rule |
 |---|---|---|---|---|
@@ -117,9 +117,15 @@ Each run's report and records are in `results/`:
 | Test set at `b817e83`, Sonnet | `2026-11-16-b817e83-sonnet-test` |
 | Finance reports request, before the hand-back fix | `2026-11-16-9dec77f-haiku-finance-reports-before` |
 | Finance reports request, after it | `2026-11-16-0b17231-haiku-finance-reports-after` |
+| Development probes, before the one-grant rule | `2026-11-16-haiku-probes-before-one-grant-rule` |
+| Development probes, after it | `2026-11-16-haiku-probes-after-one-grant-rule` |
+| Development tasks at `b817e83` | `2026-11-16-b817e83-haiku-development` |
+| Development probes at `b817e83` | `2026-11-16-b817e83-haiku-probes` |
 
-`docs/eval-pass-criteria.md` has a dated note for every change made between runs. The labels in all three sets rest on the requirements in `docs/requirements.md`, which the maintainer
-approved on 2026-11-16.
+`docs/eval-pass-criteria.md` has a dated note for every change made between runs. The labels in all three sets
+rest on the requirements in `docs/requirements.md`, which the maintainer approved on 2026-11-16. The requirements
+were written after the labels, and the maintainer ruled on five test labels after the scored runs. No label
+changed.
 
 ### Reason 1: a rule in code held where a prompt didn't
 
@@ -129,6 +135,8 @@ approved on 2026-11-16.
   asked.
 - **Run 2:** the same prompts gave no wrong grants.
 - **Run 4:** with the instruction and no rule behind it, vague requests gave five wrong grants across both arms.
+  Run 4 leaves the rule out of arms that had been changed to work with it, so it isn't the original prompts.
+  Those gave one wrong grant across runs 1 to 3.
 - **Run 5:** the settle rule was switched on, on the same commit as run 4. The gateway now acts only on a person
   and a group that the request's own words settled. Wrong grants from vague requests went from five to none.
 - **Runs 4 and 5 also showed a prompt change doing harm.** To work with the settle rule, the agent's instructions
@@ -136,9 +144,11 @@ approved on 2026-11-16.
   added a second group, three times in each run. Earlier runs had refused it.
 - **Run 6:** a second rule holds a request to one person and one group, and the instructions were made plainer.
   Neither arm made a wrong grant.
-- **The test set is the clean check of that second rule.** A validation request had prompted the rule, so the test
-  set couldn't show it worked on text it hadn't seen. On ten test requests that try to add a second group or
-  person, written blind, both arms on both models completed 30 of 30 with no wrong grant.
+- **The second rule was never called on in a scored run.** From run 6 on, and on ten test requests that try to
+  add a second group or person, no arm tried a second grant, so the gateway had nothing to refuse. The plainer
+  instructions held. The rule is shown working only by the unit tests and by the development probes: 7 wrong
+  grants in 12 agent runs before the change and none after. The measured case for a rule in code is the settle
+  rule, in runs 4 and 5.
 - **Neither recorded signal flagged every run that went wrong.** Both are written down and never acted on.
   - **Run 1:** a lookup that returned more than one match flagged every miss in both arms. The workflow's stated
     confidence was below 80 on all four of its misses, the wrong grant among them, and on 59 runs it completed.
@@ -167,19 +177,24 @@ The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` gi
   runs. A careful person would have done the original ask in two of them and denied it in three, because the
   person asked for is inactive. All five count as misses.
 - **The second run gave the same result.** At `b817e83` the workflow on Haiku made the same six wrong grants on
-  the same two requests. The agent again made none, and asked which was meant in seven runs.
+  the same two requests. The agent again made none. It asked which was meant in seven runs, across three of the
+  swapped-ask requests.
 - **We haven't fixed this in phase 1, on purpose.** Changing the arms against a test result would spend the
   set the way the validation set was spent. It's a measured limit.
 
-### Reason 3: a bigger model closed the gap, at 18 times the cost
+### Reason 3: a bigger model closed the gap, at about 20 times the cost
 
 - **Runs 8 and 10 and the test set, twice:** `claude-sonnet-5-5` with both rules made no wrong grant on either
   set. It completed every swapped-ask run on both arms the first time. The second time the workflow sent one back
   to the requester.
 - **Run 3:** it had also completed every validation request before either rule existed.
-- **Cost:** the Sonnet agent cost $0.0231 a completed task in run 8, against $0.0013 for the Haiku agent in run 7.
-  Runs 10 and 9 gave $0.0230 and $0.0013.
-- **No guarantee:** 864 runs an arm without a wrong grant doesn't show that it can't make one. Where a rule
+- **Cost:** the gap was the workflow's, so compare the workflows: $0.0042 a completed task on Sonnet in run 8
+  against $0.0002 on Haiku in run 7, about 20 times. The agents were $0.0231 against $0.0013, about 18 times.
+  Runs 10 and 9 gave the same figures to within a rounding. Most of that is the price list: Sonnet's list price
+  is 20 times Haiku's.
+- **The cheap agent also made no wrong grant once both rules were in.** The Haiku agent, at $0.0013, made none
+  from run 6 on, on either set. It sent the swapped asks back to the requester where Sonnet completed them.
+- **No guarantee:** 864 runs an arm (runs 8 and 10 and the test set twice) without a wrong grant doesn't show that it can't make one. Where a rule
   applies, it refuses the action whatever the model decides.
 
 ### What the two arms cost
@@ -205,7 +220,8 @@ Ranges are 95% intervals.
   - The workflow on Haiku sent back "the finance reports, read only" twice in three in run 7, and three times in
     three in run 9.
   - On the test set, neither arm on either model completed a request for the finance reports, "view only".
-    The group's record says "read", and the request never does. One Haiku agent run ran out of steps on it.
+    The group's record says "read", and the request never does. One Haiku agent run in each test-set run ran
+    out of steps on it.
 - **A fix for that hand-back worked on the wording it was made on, and not beyond.** It was made on the development
   set's version of the request. Run 16 times an arm on Haiku, the agent completed it once before the fix and nine
   times after. The workflow completed it 16 times both before and after, so on that wording it didn't need the
@@ -217,7 +233,8 @@ Ranges are 95% intervals.
 - **Anything about real service-desk requests.** Every request here is generated, on a fictional company. See "What
   we won't claim" in `docs/eval-pass-criteria.md`.
 - **That the rules end wrong grants.** The test set shows one kind they miss. A request's filler words can
-  also fool the settle rule, though no test request did. `docs/adr/0003` and `0004` say how.
+  also fool the settle rule, though no test request did: the directory's search matches part of a word, so the
+  word "new" in a request finds only All-Staff-News. `docs/adr/0003` and `0004` say how.
 - **How often a swapped ask gets through.** Eight requests of that kind is enough to show it happens and too few
   to put a rate on it.
 
@@ -263,11 +280,12 @@ flowchart TB
 
 - **The workflow** (`workflow.py`) runs the same steps every time and calls the model at two set points.
 - **The agent** (`agent.py`) lets the model pick each next step.
-- **The gateway** is the only way either arm can reach the directory. Policy is deny by default.
+- **The gateway** is the only way a tool call reaches the directory. Policy is deny by default. The approval step
+  writes the owner's answer to the directory itself.
 - **Facts come from the directory.** Nothing the model says counts as one.
 - **Approvals** are recorded by the approval step, never by a tool the model can call. The step pauses the request
-  until the group's owner answers, and survives a restart: the pause is saved, and so is what the gateway worked
-  out about the request.
+  until the group's owner answers. It can survive a restart when the directory and the saved pause are files, as
+  one test shows. The CLI and the eval keep both in memory.
 - **The audit log** is a table that refuses updates and deletes through database triggers. That guards against a
   mistake in this code. It doesn't stop someone who has the file.
 - **Where the numbers come from.** Tool-call and lookup counts come from the audit log. Completion and wrong grants

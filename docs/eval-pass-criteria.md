@@ -205,8 +205,9 @@ label, rule, prompt or score changed.
   set confirmed and measured the gap.
 - **Simulated approval.** Three of the six wrong grants on the test set passed an approval step. The simulated
   owner always says yes and never sees the request text. The README now says so.
-- **Development figures.** The counts from development runs in the notes above (7 wrong grants in 12 agent runs, 16
-  of 16 and 6 of 13 on the finance reports request) were made while building and aren't kept in `results/`. The
+- **Development figures.** The probe runs behind "7 wrong grants in 12 agent runs before and none after" are now
+  in `results/`. The counts of 16 of 16 and 6 of 13 on the finance reports request came from runs that weren't
+  kept, and a later note measures that request again. The
   "before" counts for the finance reports request were dropped from the README because they can't be traced.
 - **The audit log and restarts.** The README said the audit log can't be changed or deleted, that every number
   comes from it, and that the approval pause survives a restart. Triggers refuse plain updates and deletes, and
@@ -217,8 +218,8 @@ label, rule, prompt or score changed.
 
 ### 2026-11-16: two code fixes, and a second run on the test set
 Planned before it ran. The same review found two faults in the code. Both were fixed, and checked on the
-development tasks and probes only, where the new code scored the same as the old: no wrong grant, and one agent
-miss in 78 runs each.
+development tasks and probes only. On the new code: no wrong grant, one agent miss in 78 runs an arm on the
+development tasks, and none in 12 runs an arm on the probes. The records are in `results/`.
 
 - A search word now counts as in the request only as a word of its own. Before, "ops" counted as present in
   "laptops".
@@ -241,13 +242,24 @@ time in 16 before and 9 in 16 after. The workflow completed it 16 in 16 both tim
 note of 2026-11-16 above, which came from runs that weren't kept.
 
 ### 2026-11-17: commit ids changed
-Before the repo was made public, its commit messages were tidied: a link to a private work session was removed
-from each, and six merge subjects lost the name of an earlier home for the repo. No file, author or date changed,
-but a commit's id is made from its message, so every id changed. The ids cited in this repo, and in the names of
-results folders, were updated to match.
+The commit messages were tidied before the repo was made public, which changed every commit id. No file, author
+or date changed. The ids cited in this repo, and in the names of results folders, are the current ones. A run's
+link to its code is the commit id in its folder name: the records themselves carry no commit and no date.
 
-| Id before | Id now |
-|---|---|
-| `1c1b1d5` | `b817e83` |
-| `98b5541` | `9dec77f` |
-| `b4e5093` | `0b17231` |
+### 2026-11-17: a last review before publication
+Three reviewers read the repo again. No request, label, prompt or score changed, and the code changes below were
+checked to give the same answer as before on every word of every request in the three sets.
+
+- **The one-grant rule never refused anything in a scored run.** After the plainer instructions, no arm tried a
+  second grant. The README called the test set the clean check of that rule. It now says the rule is shown
+  working only by the unit tests and the development probes.
+- **The swapped ask** is reported as two of eight requests, on every repeat, in both runs. The README had given
+  six in 120 runs.
+- **Restart.** The saved state is read again at each decision, so a second gateway for the same request sees what
+  the first acted on. The state is keyed by the run and the request's text, so each ticket needs its own run id,
+  and a saved match isn't checked again if the directory changes. The CLI and the eval keep everything in memory.
+- **Whole words.** A letter or digit in any alphabet now joins a word. The directory's own search still matches
+  part of a word, and ADR 0003 says so.
+- **Approvals.** TR-05 said an approval counts only from the group's owner. The gateway checks the recorded
+  approver against the owner, but the approval step records whoever the answer names. TR-05 now says that.
+- **Cost.** The README compared the two agents. The gap was the workflow's, so it now gives both comparisons.

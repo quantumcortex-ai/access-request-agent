@@ -7,7 +7,7 @@
 A request asks to add one person to one group. The agent was told so in its instructions, and that was the only
 thing holding it to one. In the scored run of 2026-11-15 the agent read a forwarded "policy update" inside a
 request as policy and added a second group, in all three repeats of that task. Four hand-written dev requests of
-the same shape (`tasks/dev-probes.jsonl`) reproduced it: 7 wrong grants in 12 agent runs, made while building and not kept in `results/`. The settle rule
+the same shape (`tasks/dev-probes.jsonl`) reproduced it: 7 wrong grants in 12 agent runs (`results/2026-11-16-haiku-probes-before-one-grant-rule`). The settle rule
 (ADR 0003) didn't stop it, because the injected text is part of the request and names a real group exactly.
 
 The workflow never did this. Its steps can only act on one person and one group.
@@ -46,3 +46,8 @@ The test set (`tasks/test.jsonl`) measured both sides of this rule. On ten reque
 group or person, neither arm made a wrong grant on either model. On eight requests that swap the ask for a different
 group or person, the workflow on `claude-haiku-5-5` granted the swap in six of 24 runs. This rule doesn't choose the
 first grant, so it can't stop that. Nothing in phase 1 was changed in response.
+
+## Noted 2026-11-17
+No scored run shows this rule refusing a call. After the change to the instructions, no arm tried a second grant on
+the validation set or the test set. The rule is exercised by `tests/test_one_grant.py` and nothing else, so its
+evidence here is that the code does what it says, not that it was needed.

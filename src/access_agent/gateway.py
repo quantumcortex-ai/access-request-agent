@@ -11,7 +11,8 @@ directory's database, so a request that pauses for an approval can be picked
 up by a new process:
 
 - which users and groups the request itself settled: each was the only result
-  of a search whose every word appears in the request;
+  of a search whose every word appears in the request as a word of its own, or
+  the request contains the group's exact name;
 - which user and group the run has already acted on, because a request adds
   one person to one group.
 """
@@ -54,12 +55,13 @@ def in_request(word: str, request: str | None) -> bool:
     """Does the request contain this word as a word of its own?
 
     "ops" is not in a request that says "laptops". A letter or a digit on either
-    side makes it part of a longer word. A hyphen, a dot or an apostrophe doesn't,
-    so "finance" is in "Finance-Reports" and "carter" is in "Carter's".
+    side, in any alphabet, makes it part of a longer word. A hyphen, an underscore,
+    a dot or an apostrophe doesn't, so "finance" is in "Finance-Reports" and
+    "carter" is in "Carter's".
     """
     if not request or not word:
         return False
-    return re.search(rf"(?<![a-z0-9]){re.escape(word.lower())}(?![a-z0-9])", request.lower()) is not None
+    return re.search(rf"(?<![^\W_]){re.escape(word.lower())}(?![^\W_])", request.lower()) is not None
 
 
 def outside_request(query: str, request: str | None) -> list[str]:
@@ -69,6 +71,8 @@ def outside_request(query: str, request: str | None) -> list[str]:
 
 # What the gateway remembers about one request. It is keyed by the run and the request's
 # text, so a new gateway for the same request finds what the first one worked out.
+# The caller must give each ticket its own run id: two tickets with the same words under
+# one run id share this state. A saved match isn't checked again if the directory changes.
 STATE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS request_state (
     run_id TEXT NOT NULL,
@@ -157,8 +161,10 @@ class Gateway:
         if self.request is None:
             return
         rows = self.directory.conn.execute(
-            "SELECT kind, value FROM request_state WHERE run_id = ? AND request = ?", (self.run_id, self.request)
+            "SELECT kind, value FROM request_state WHERE run_id = ? AND request = ? ORDER BY rowid DESC",
+            (self.run_id, self.request),
         ).fetchall()
+        # Oldest last, so the first pair ever acted on is the one that stands.
         for row in rows:
             if row["kind"] == "user":
                 self._settled_users.add(row["value"])
@@ -335,6 +341,8 @@ class Gateway:
         return None
 
     def _facts(self, user: User, group: Group) -> dict[str, str]:
+        # Read the saved state again: another gateway for this request may have acted since this one started.
+        self._recall()
         eligible = not group.allowed_departments or user.department in group.allowed_departments
         return {
             "group_tier": group.tier.value,

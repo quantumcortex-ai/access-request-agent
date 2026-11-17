@@ -7,7 +7,8 @@
 #   department_eligible  yes | no
 #   approval             owner | other | rejected | none | no_owner
 #   match_settled        yes | no    yes when the user and the group were each the only result of a
-#                                    search whose every word appears in the request
+#                                    search whose every word appears in the request as a word of its
+#                                    own, or the request contains the group's exact name
 #   second_pair         yes | no    yes when this run already acted on a different user and group
 # A rule with no `actors` applies to every actor.
 

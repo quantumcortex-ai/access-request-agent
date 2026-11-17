@@ -46,3 +46,17 @@ Two fixes from a review of the code, scored as runs 9 and 10.
   word, so "finance" is in "Finance-Reports".
 - What the request settled, and the pair the run acted on (ADR 0004), are kept in the directory's database, keyed
   by the run and the request's text. A request that pauses for an approval can be finished by a new process.
+
+## Limits noted 2026-11-17
+- Only the request side matches whole words. The directory's search still matches part of a word, so the request
+  word "new" finds only All-Staff-News, and "can" finds only Engineering-Prod-Deploy. A caller that searches a
+  filler word like these gets a settled match the request didn't give. This is the filler-words limit above, and
+  whole-word matching didn't close it.
+- A letter or a digit in any alphabet joins a word. A hyphen, an underscore, a dot or an apostrophe ends one.
+- The saved state is keyed by the run and the request's text. Two tickets with the same words need different run
+  ids, or the second inherits what the first settled.
+- A saved match isn't checked again. If a namesake joins the directory while a request waits for approval, the
+  earlier match still stands.
+- The saved state is read again at each decision, so a second gateway for the same request sees what the first
+  acted on. Two gateways deciding at the same instant are not guarded against.
+- With no request given, nothing is saved.

@@ -61,6 +61,24 @@ def test_a_word_inside_a_longer_word_is_not_in_the_request():
     assert grounded("laptops", request)
     assert grounded("finance reports", request)  # a hyphen ends a word
     assert grounded("carter", request)  # so does an apostrophe
+    assert not grounded("carter", "please add écarter")  # a letter in any alphabet joins a word
+    assert not grounded("ops", "the ÉOPS team")
+
+
+def test_a_gateway_sees_what_another_one_acted_on_since_it_started(directory):
+    request = "Please add Sam Carter from Sales to the sales team group and All-Staff-News"
+    first, second = gateway_for(directory, request), gateway_for(directory, request)
+    for gateway in (first, second):
+        user = gateway.call("lookup_user", {"query": "Sam Carter", "department": "Sales"}, task_id="t")
+        gateway.call("find_groups", {"query": "sales team"}, task_id="t")
+        gateway.call("find_groups", {"query": "All-Staff-News"}, task_id="t")
+    user_id = user.data["users"][0]["id"]
+    assert first.call("add_to_group", {"user_id": user_id, "group_id": gid(directory, "Sales-Team")}, task_id="t").ok
+    refused = second.call(
+        "add_to_group", {"user_id": user_id, "group_id": gid(directory, "All-Staff-News")}, task_id="t"
+    )
+    assert refused.error is ErrorCode.POLICY_DENIED and refused.rule_id == "one-grant-per-request"
+    assert not directory.is_member(user_id, gid(directory, "All-Staff-News"))
 
 
 def test_a_new_gateway_for_the_same_request_keeps_what_was_settled(directory):

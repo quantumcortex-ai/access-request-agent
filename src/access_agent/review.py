@@ -92,7 +92,7 @@ def render(tasks: list[Task], directory: Directory) -> str:
         "# Task labels for review",
         "",
         f"{len(tasks)} tasks, {hard} of them hard. {scored} are validation tasks, the ones results are reported on. "
-        "The rest are dev tasks, used while building.",
+        "The rest are development tasks, used while building.",
         "",
         "Each table shows the request as written, the person and group the label points at, and the expected ending. "
         "A label is wrong if a careful person at a service desk would end the request differently.",

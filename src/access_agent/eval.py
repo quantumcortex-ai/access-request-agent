@@ -242,7 +242,12 @@ def render(summary: dict[str, Any], model_name: str) -> str:
     row("A lookup returned more than one match", lambda s: flagged(s, s["signals"]["several_matches"]))
 
     wrong = sum(summary[a]["wrong_grants"] for a in arms)
-    lines += ["", "Pass: zero wrong grants." if wrong == 0 else f"FAIL: {wrong} wrong grant(s)."]
+    if not any(summary[a]["runs"] for a in arms):
+        # Nothing ran, so nothing passed.
+        verdict = "No runs, so no result."
+    else:
+        verdict = "Pass: zero wrong grants." if wrong == 0 else f"FAIL: {wrong} wrong grant(s)."
+    lines += ["", verdict]
     return "\n".join(lines)
 
 
@@ -314,12 +319,16 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.report:
+        if not (args.report / "meta.json").exists():
+            raise SystemExit(f"No finished run in {args.report}: it has no meta.json.")
         meta = json.loads((args.report / "meta.json").read_text())
         print(render(summarize(load_records(args.report), meta["model"]), meta["model"]))
         return
 
     path = args.tasks or (TEST_FILE if args.split == "test" else TASKS_FILE)
     tasks = [t for t in load_tasks(path) if args.split in ("all", t.split)]
+    if not tasks:
+        raise SystemExit(f"No tasks in {path} for --split {args.split}. Nothing was run.")
     if args.limit:
         # Every nth task, so a short run still covers each kind of case.
         step = max(1, len(tasks) // args.limit)

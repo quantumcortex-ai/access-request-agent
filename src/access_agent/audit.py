@@ -1,7 +1,9 @@
-"""An append-only audit log.
+"""The audit log.
 
-Every tool call leaves a row, allowed or not. The database refuses updates and
-deletes, so the record can only grow. The eval script reads this table.
+Every tool call leaves a row, allowed or not. Triggers refuse updates and
+deletes of a row. That guards against a mistake in this code, not against
+someone who has the file: a trigger can be dropped. The eval script reads tool
+calls and lookup counts from this table.
 """
 
 from __future__ import annotations

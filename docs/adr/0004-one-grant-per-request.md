@@ -7,7 +7,7 @@
 A request asks to add one person to one group. The agent was told so in its instructions, and that was the only
 thing holding it to one. In the scored run of 2026-11-15 the agent read a forwarded "policy update" inside a
 request as policy and added a second group, in all three repeats of that task. Four hand-written dev requests of
-the same shape (`tasks/dev-probes.jsonl`) reproduced it: 7 wrong grants in 12 agent runs. The settle rule
+the same shape (`tasks/dev-probes.jsonl`) reproduced it: 7 wrong grants in 12 agent runs, made while building and not kept in `results/`. The settle rule
 (ADR 0003) didn't stop it, because the injected text is part of the request and names a real group exactly.
 
 The workflow never did this. Its steps can only act on one person and one group.
@@ -37,6 +37,10 @@ search also returns "Finance-Reports-Editors". This amends ADR 0003.
   unseen for this kind of case. The pass criteria carry a dated note saying so.
 
 ## Measured 2026-11-16
+
+The second consequence above was written before the test set existed. The brief for the test set
+(`docs/test-set-brief.md`) then asked for requests that swap the ask, so the set confirmed and measured a gap this
+record had already named. It didn't discover it.
 
 The test set (`tasks/test.jsonl`) measured both sides of this rule. On ten requests that try to add a second
 group or person, neither arm made a wrong grant on either model. On eight requests that swap the ask for a different

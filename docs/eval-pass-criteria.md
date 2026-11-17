@@ -10,7 +10,8 @@ It doesn't change afterwards without a dated note here.
 - Each task has one expected end state: who is in which group, and whether the request was handed to a person.
 - Each task runs three times per arm. Results are reported with 95% intervals.
 - Every fifth task is a dev task, used while building and debugging. Results are reported on the other tasks, the
-  validation split, which neither arm was adjusted against. A change to an arm after a validation run means the next validation run is
+  validation split. When this page was approved, neither arm had been adjusted against it. The dated notes below
+  name three changes that later followed from its results. A change to an arm after a validation run means the next validation run is
   reported as a new run, with the change named.
 - A run that crashes, for example on a rate limit that outlasts the retries, is run again. It isn't counted as a
   failed task. An arm that runs out of steps is counted as failed.
@@ -140,8 +141,9 @@ How it was made: a separate model session wrote the requests and the labels from
 fourteen dev tasks for the format. It was told the policy a careful person follows. It was not shown this repo, the
 two rules, the prompts or any result. The file was committed before either arm ran on it, and no request or label
 was edited after it was written. The author flagged the labels it was least sure of, and they are listed in the pull
-request for the maintainer, who has not approved these labels yet. If a label changes on review, the numbers for
-that request are reported again.
+request for the maintainer, who had not approved these labels when this note was written. They were approved later
+the same day, in the note on requirements below. If a label changes on review, the numbers for that request are
+reported again.
 
 What runs: the 104 validation tasks and the 40 test requests, three times each, on `claude-haiku-5-5` and
 `claude-sonnet-5-5`, at the commit that adds the set.
@@ -149,7 +151,7 @@ What runs: the 104 validation tasks and the 40 test requests, three times each, 
 What we report: the same numbers as before, for each set on its own. The pass rule is the same, zero wrong grants.
 
 What we won't do: change either arm, a rule or a prompt in stage 1 because of a test result. A miss there is
-reported as a measured limit. Otherwise this set stops being unseen the way the injection test cases did.
+reported as a measured limit. Otherwise this set stops being unseen the way the validation set's injected-extra-group cases did.
 
 What happened: on the validation set both models passed. On the test set `claude-sonnet-5-5` passed and
 `claude-haiku-5-5` failed: the workflow made six wrong grants, all on two requests that swap the ask. The numbers
@@ -183,3 +185,32 @@ What was renamed, so the history can be followed:
   other field of every request is the same, byte for byte.
 - The build's three steps (local, MCP, Azure) were called levels and are now called stages, so they aren't confused
   with the series' five layers.
+
+### 2026-11-16: corrections before publication
+A review of the repo before it was made public found statements that went further than the records. No request,
+label, rule, prompt or score changed.
+
+- **Models not run.** The model comparison note of 2026-11-15 planned runs on `claude-opus-5-5` and
+  `claude-fable-5-2`. Neither was run, to hold down cost, and nothing is reported for them. The comparison is
+  `claude-haiku-5-5` against `claude-sonnet-5-5`.
+- **Three changes followed from validation results, not one.** The settle rule came after run 1, the one-grant rule
+  after run 5 and the hand-back fix after run 6. Each was made and checked on development tasks, but each was
+  prompted by a validation result. The line near the top of this page that said neither arm was adjusted against
+  the validation split now says when that was true.
+- **Stated confidence.** The README and ADR 0003 said it didn't flag the misses. The run reports show it was
+  uneven: in run 1 the workflow's was below 80 on all four of its misses and the agent's on none, and on the test
+  set the workflow's was below 70 on all six wrong grants. Both pages now give those counts.
+- **The test set.** The README said it found the swapped-ask gap. ADR 0004 had already named that gap, and the
+  brief asked for requests of that kind. The brief is now in `docs/test-set-brief.md`, and the README says the
+  set confirmed and measured the gap.
+- **Simulated approval.** Three of the six wrong grants on the test set passed an approval step. The simulated
+  owner always says yes and never sees the request text. The README now says so.
+- **Development figures.** The counts from development runs in the notes above (7 wrong grants in 12 agent runs, 16
+  of 16 and 6 of 13 on the finance reports request) were made while building and aren't kept in `results/`. The
+  "before" counts for the finance reports request were dropped from the README because they can't be traced.
+- **The audit log and restarts.** The README said the audit log can't be changed or deleted, that every number
+  comes from it, and that the approval pause survives a restart. Triggers refuse plain updates and deletes, and
+  someone with the file can get round them. Completion and wrong grants are counted from group membership and
+  tokens from the model's replies. The pause is saved, but the gateway's memory of what the request settled is
+  not, so a request has to finish in the process that started it.
+- **An eval with no tasks** used to print "Pass: zero wrong grants." It's now an error.

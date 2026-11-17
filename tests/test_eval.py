@@ -232,3 +232,9 @@ def test_the_test_set_loads_and_names_real_records():
         for user_id, group_id in [*task.expect_grants, [task.user_id, task.group_id]]:
             assert directory.get_user(user_id) is not None, task.id
             assert directory.get_group(group_id) is not None, task.id
+
+
+def test_a_run_with_no_tasks_is_not_a_pass():
+    text = ev.render(ev.summarize([], "claude-haiku-5-5"), "claude-haiku-5-5")
+    assert "Pass" not in text
+    assert "No runs, so no result." in text

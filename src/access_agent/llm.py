@@ -86,13 +86,16 @@ def make_client() -> Any:
     if not resource:
         raise RuntimeError("Set ANTHROPIC_API_KEY, or FOUNDRY_RESOURCE for keyless sign-in to Foundry.")
 
-    from azure.identity import (
-        AzureCliCredential,
-        ChainedTokenCredential,
-        EnvironmentCredential,
-        ManagedIdentityCredential,
-        get_bearer_token_provider,
-    )
+    try:
+        from azure.identity import (
+            AzureCliCredential,
+            ChainedTokenCredential,
+            EnvironmentCredential,
+            ManagedIdentityCredential,
+            get_bearer_token_provider,
+        )
+    except ImportError:
+        raise RuntimeError('Foundry sign-in needs azure-identity. Run: pip install -e ".[foundry]"') from None
 
     # Named sources only, in a fixed order, so a run never signs in as an account
     # nobody chose: a managed identity when deployed, a service principal from the

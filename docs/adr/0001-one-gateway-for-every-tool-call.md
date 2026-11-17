@@ -17,7 +17,8 @@ not.
 - Policy is deny by default, in `policy/rules.toml`. The model supplies no facts: tier, status, department and
   approval all come from the directory.
 - Approvals are written by the approval step. No tool the model can call writes one.
-- The audit table refuses updates and deletes.
+- The audit table refuses updates and deletes through triggers. That guards against a mistake in this code, not
+  against someone who has the file.
 - The directory is a local SQLite file. No code here talks to a real directory.
 
 ## Consequences

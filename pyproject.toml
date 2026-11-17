@@ -2,6 +2,10 @@
 name = "access-agent"
 version = "0.1.0"
 description = "One IT access request, built as a workflow and as an agent and measured on one eval set."
+readme = "README.md"
+license = "CC-BY-4.0"
+license-files = ["LICENSE"]
+authors = [{ name = "QuantumCortex.AI" }]
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.9,<3",
@@ -9,6 +13,10 @@ dependencies = [
     "langgraph-checkpoint-sqlite>=3.1,<4",
     "anthropic>=2.8,<3",
 ]
+
+[project.urls]
+Homepage = "https://quantumcortex.ai/series/"
+Repository = "https://github.com/quantumcortex-ai/access-request-agent"
 
 [project.optional-dependencies]
 # Keyless sign-in to Claude on Microsoft Foundry. Not needed with an Anthropic API key.

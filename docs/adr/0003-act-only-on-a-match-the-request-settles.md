@@ -7,7 +7,8 @@
 In the first scored run every miss, in both arms, came from a request where a search returned more than one record:
 two people with one name, or "the Sales one" when there are two Sales groups. The prompt told the model not to
 guess. It guessed anyway, rarely, and one guess became a wrong grant. A stronger model may guess less often, but
-"less often" isn't a control. The model's stated confidence didn't separate these runs from the rest either.
+"less often" isn't a control. The model's stated confidence wasn't a dependable flag either: the workflow's was
+below 80 on all four of its misses and on 59 runs it completed, and the agent's was below 80 on none of its four.
 
 ## Decision
 - Whether a match is settled is a fact the gateway works out. It is never taken from the model.
@@ -28,10 +29,13 @@ guess. It guessed anyway, rarely, and one guess became a wrong grant. A stronger
 - The rule is a narrowing, not a proof. A request's filler words can happen to pick out one group: "needs access
   to the Sales one" contains "access", which matches only one of the two Sales groups. A caller that searches
   "access sales" gets a settled match the request didn't give. `tests/test_settle.py` keeps that case visible.
+- The check for "appears in the request" looks for the word anywhere in the text, so "ops" counts as present in
+  a request that says "laptops". It is left as it is in stage 1 because the published
+  runs were made on it.
 - The rule depends on how search works here: every word must match a group's name or description. A directory with
   fuzzier search would need a different test of "settled".
 - Both arms changed to work with it: the workflow records a department and searches again after a pick, and the
-  agent's instructions say how a match is settled. Those changes were made on the dev tasks only.
+  agent's instructions say how a match is settled. Those changes were made on the development tasks only.
 
 ## Amended 2026-11-16
 A group's exact name settles that group when the request contains the name as a word of its own, even if the name

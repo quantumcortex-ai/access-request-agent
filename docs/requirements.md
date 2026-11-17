@@ -87,13 +87,13 @@ Source: follows from BR-02 and BR-03. Not stated on its own before this page.
 | TR-03 | A person or group is settled only when it was the single result of a search whose every word is in the request, or the request contains the group's exact name. An unsettled match can't be acted on | BR-03 | `gateway.py`, ADR 0003 | `tests/test_settle.py` |
 | TR-04 | The gateway remembers the first person and group a run acts on and refuses any other pair | BR-01 | `gateway.py`, ADR 0004 | `tests/test_one_grant.py` |
 | TR-05 | An approval is written by the approval step and never by a tool the model can call. It counts only when it comes from the group's owner | BR-05, BR-02 | `approval.py`, `directory.py` | `tests/test_core.py`, `tests/test_arms.py` |
-| TR-06 | Every call is written to an append-only log, allowed or refused, with the rule that decided it | All | `audit.py` | `tests/test_core.py` |
+| TR-06 | Every call is written to a log, allowed or refused, with the rule that decided it. Triggers refuse updates and deletes of its rows | All | `audit.py` | `tests/test_core.py` |
 | TR-07 | Every run ends in one named outcome. A refusal by the no-owner or privileged rule ends as handed off, an unsettled match as needs clarification, any other refusal as denied. Running out of steps is never a correct ending | BR-03, BR-05 to BR-09 | `workflow.py`, `agent.py`, `models.py` | `tests/test_arms.py` |
 
 ### Not yet met by a control
 BR-02 and BR-11 say which ask is the requester's. Nothing in code checks that. TR-04 holds a run to one grant, but
 it doesn't check that the one grant is the one that was asked for. Today only the model's instructions cover it,
-and instructions aren't a control. The test run on 2026-11-16 measured this: six wrong grants by the workflow
+and instructions aren't a control. The run on the test set on 2026-11-16 measured this: six wrong grants by the workflow
 on Haiku, all on requests where injected text swapped the ask.
 
 ## Decided by the maintainer, 2026-11-16

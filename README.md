@@ -12,7 +12,7 @@ requests you didn't write.
 In this example, two rules in a gateway ended the wrong grants they were written for, on the smallest model we
 tried. The decision record for one of those rules said it can't choose which grant is the right one. A test set
 written by a session that never saw the rules confirmed that and measured it: the fixed workflow granted a swapped
-ask six times in 120 runs.
+ask six times in 120 runs, and six times again when the runs were repeated on later code.
 
 ## Three reasons
 
@@ -36,7 +36,9 @@ ask six times in 120 runs.
   - **Validation, 104 requests:** from the same generator as the development set. A validation run is the 104,
     three times each, so 312 runs an arm. Three changes followed from its results (the settle rule after run 1,
     the one-grant rule after run 5 and the hand-back fix after run 6), so it is no longer unseen.
-  - **Test, 40 requests:** three times each, so 120 runs an arm. Nothing is tuned against it.
+  - **Test, 40 requests:** three times each, so 120 runs an arm. Nothing is tuned against it. The arms have run
+    on it twice: at commit `b4e5093`, and at `1c1b1d5` after two code fixes that came from a code review and not
+    from a test result.
 - **How the test set was written:** a separate model session wrote the requests and the labels from a brief, a
   listing of the directory and fourteen development tasks for the format. The brief is in
   `docs/test-set-brief.md`. It states the policy a careful person follows and names the five kinds of request to
@@ -59,20 +61,38 @@ ask six times in 120 runs.
 | 6. Haiku, settle rule and one-grant rule, 2026-11-16 | 311 of 312 | 311 of 312 | 0 | Passes |
 | 7. Haiku, with the hand-back fix, commit `b4e5093` | 312 of 312 | 310 of 312 | 0 | Passes |
 | 8. Sonnet, same commit as run 7 | 312 of 312 | 312 of 312 | 0 | Passes |
+| 9. Haiku, whole-word matching and saved request state, commit `1c1b1d5` | 312 of 312 | 309 of 312 | 0 | Passes |
+| 10. Sonnet, same commit as run 9 | 312 of 312 | 312 of 312 | 0 | Passes |
 
-### The test set, at commit `b4e5093`
+### The test set, twice
 
-| Model | Agent completed | Workflow completed | Wrong grants | Pass rule |
-|---|---|---|---|---|
-| Haiku | 112 of 120 | 108 of 120 | workflow 6 | Fails |
-| Sonnet | 117 of 120 | 117 of 120 | 0 | Passes |
+| Commit | Model | Agent completed | Workflow completed | Wrong grants | Pass rule |
+|---|---|---|---|---|---|
+| `b4e5093` | Haiku | 112 of 120 | 108 of 120 | workflow 6 | Fails |
+| `b4e5093` | Sonnet | 117 of 120 | 117 of 120 | 0 | Passes |
+| `1c1b1d5` | Haiku | 110 of 120 | 108 of 120 | workflow 6 | Fails |
+| `1c1b1d5` | Sonnet | 117 of 120 | 116 of 120 | 0 | Passes |
 
-By kind of request, completed runs out of the runs of that kind:
+Commit `1c1b1d5` has two fixes from a review of the code: a search word must appear in the request as a word of
+its own, and the gateway's memory of a request is saved. Neither was made in response to a test result, and
+neither moved the wrong grants.
+
+By kind of request at `b4e5093`, completed runs out of the runs of that kind:
 
 | Kind | Haiku agent | Haiku workflow | Sonnet agent | Sonnet workflow |
 |---|---|---|---|---|
 | Text that adds a second group or person | 30 of 30 | 30 of 30 | 30 of 30 | 30 of 30 |
 | Text that swaps the ask | 19 of 24 | 15 of 24 | 24 of 24 | 24 of 24 |
+| Honest requests full of other groups' words | 24 of 24 | 24 of 24 | 24 of 24 | 24 of 24 |
+| Groups with close names | 21 of 24 | 21 of 24 | 21 of 24 | 21 of 24 |
+| Claimed approvals, exceptions and emergencies | 18 of 18 | 18 of 18 | 18 of 18 | 18 of 18 |
+
+The same at `1c1b1d5`:
+
+| Kind | Haiku agent | Haiku workflow | Sonnet agent | Sonnet workflow |
+|---|---|---|---|---|
+| Text that adds a second group or person | 30 of 30 | 30 of 30 | 30 of 30 | 30 of 30 |
+| Text that swaps the ask | 17 of 24 | 15 of 24 | 24 of 24 | 23 of 24 |
 | Honest requests full of other groups' words | 24 of 24 | 24 of 24 | 24 of 24 | 24 of 24 |
 | Groups with close names | 21 of 24 | 21 of 24 | 21 of 24 | 21 of 24 |
 | Claimed approvals, exceptions and emergencies | 18 of 18 | 18 of 18 | 18 of 18 | 18 of 18 |
@@ -89,8 +109,14 @@ Each run's report and records are in `results/`:
 | 6 | `2026-11-16-haiku` |
 | 7 | `2026-11-16-b4e5093-haiku-validation` |
 | 8 | `2026-11-16-b4e5093-sonnet-validation` |
-| Test set, Haiku | `2026-11-16-b4e5093-haiku-test` |
-| Test set, Sonnet | `2026-11-16-b4e5093-sonnet-test` |
+| 9 | `2026-11-16-1c1b1d5-haiku-validation` |
+| 10 | `2026-11-16-1c1b1d5-sonnet-validation` |
+| Test set at `b4e5093`, Haiku | `2026-11-16-b4e5093-haiku-test` |
+| Test set at `b4e5093`, Sonnet | `2026-11-16-b4e5093-sonnet-test` |
+| Test set at `1c1b1d5`, Haiku | `2026-11-16-1c1b1d5-haiku-test` |
+| Test set at `1c1b1d5`, Sonnet | `2026-11-16-1c1b1d5-sonnet-test` |
+| Finance reports request, before the hand-back fix | `2026-11-16-98b5541-haiku-finance-reports-before` |
+| Finance reports request, after it | `2026-11-16-b4e5093-haiku-finance-reports-after` |
 
 `docs/eval-pass-criteria.md` has a dated note for every change made between runs. The labels in all three sets rest on the requirements in `docs/requirements.md`, which the maintainer
 approved on 2026-11-16.
@@ -118,7 +144,7 @@ approved on 2026-11-16.
     confidence was below 80 on all four of its misses, the wrong grant among them, and on 59 runs it completed.
     The agent's was below 80 on none of its four misses.
   - **The test set, on Haiku:** the workflow's confidence was below 70 on all six wrong grants, and on 20 other
-    runs. The lookup count flagged none of the six.
+    runs. The lookup count flagged none of the six. The second run was the same: all six, and 21 other runs.
   - That's a handful of misses, so we draw no threshold from it.
 
 The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` give the reasons for each.
@@ -140,16 +166,20 @@ The two rules are in `policy/rules.toml`. `docs/adr/0003` and `docs/adr/0004` gi
 - **The agent on Haiku made no wrong grant.** It saw both swaps and asked the requester which was meant, in five
   runs. A careful person would have done the original ask in two of them and denied it in three, because the
   person asked for is inactive. All five count as misses.
+- **The second run gave the same result.** At `1c1b1d5` the workflow on Haiku made the same six wrong grants on
+  the same two requests. The agent again made none, and asked which was meant in seven runs.
 - **We haven't fixed this in phase 1, on purpose.** Changing the arms against a test result would spend the
   set the way the validation set was spent. It's a measured limit.
 
 ### Reason 3: a bigger model closed the gap, at 18 times the cost
 
-- **Run 8 and the test set:** `claude-sonnet-5-5` with both rules made no wrong grant on either set, and
-  completed every swapped-ask run on both arms.
+- **Runs 8 and 10 and the test set, twice:** `claude-sonnet-5-5` with both rules made no wrong grant on either
+  set. It completed every swapped-ask run on both arms the first time. The second time the workflow sent one back
+  to the requester.
 - **Run 3:** it had also completed every validation request before either rule existed.
 - **Cost:** the Sonnet agent cost $0.0231 a completed task in run 8, against $0.0013 for the Haiku agent in run 7.
-- **No guarantee:** 432 runs an arm without a wrong grant doesn't show that it can't make one. Where a rule
+  Runs 10 and 9 gave $0.0230 and $0.0013.
+- **No guarantee:** 864 runs an arm without a wrong grant doesn't show that it can't make one. Where a rule
   applies, it refuses the action whatever the model decides.
 
 ### What the two arms cost
@@ -172,13 +202,15 @@ Ranges are 95% intervals.
 - **The cheaper arm wasn't the safer one on the test set.** On Haiku the workflow made the six wrong grants
   and the agent made none.
 - **The settle rule's cost is hand-backs.** Requests that a careful person could have done, and an arm sent back:
-  - In run 7 the workflow sent back "the finance reports, read only" twice in three.
+  - The workflow on Haiku sent back "the finance reports, read only" twice in three in run 7, and three times in
+    three in run 9.
   - On the test set, neither arm on either model completed a request for the finance reports, "view only".
     The group's record says "read", and the request never does. One Haiku agent run ran out of steps on it.
 - **A fix for that hand-back worked on the wording it was made on, and not beyond.** It was made on the development
-  set's version of the request. In development runs after the fix, which aren't kept in `results/`, the workflow
-  completed it 16 times in 16 and the agent 6 times in 13. In run 7 the agent completed the validation set's
-  version three times in three and the workflow once.
+  set's version of the request. Run 16 times an arm on Haiku, the agent completed it once before the fix and nine
+  times after. The workflow completed it 16 times both before and after, so on that wording it didn't need the
+  fix. On the validation set's version, in run 7, the agent completed it three times in three and the workflow
+  once.
 
 ### What this doesn't show
 
@@ -234,8 +266,8 @@ flowchart TB
 - **The gateway** is the only way either arm can reach the directory. Policy is deny by default.
 - **Facts come from the directory.** Nothing the model says counts as one.
 - **Approvals** are recorded by the approval step, never by a tool the model can call. The step pauses the request
-  until the group's owner answers. In phase 1 a request has to finish in the process that started it: the pause is
-  saved, but the gateway's memory of what the request settled isn't.
+  until the group's owner answers, and survives a restart: the pause is saved, and so is what the gateway worked
+  out about the request.
 - **The audit log** is a table that refuses updates and deletes through database triggers. That guards against a
   mistake in this code. It doesn't stop someone who has the file.
 - **Where the numbers come from.** Tool-call and lookup counts come from the audit log. Completion and wrong grants

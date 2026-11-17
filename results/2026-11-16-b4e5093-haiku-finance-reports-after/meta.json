@@ -1,0 +1,7 @@
+{
+ "model": "claude-haiku-5-5",
+ "tasks": 1,
+ "repeats": 16,
+ "arm": "both",
+ "split": "dev"
+}

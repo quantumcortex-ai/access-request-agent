@@ -21,7 +21,7 @@ QuantumCortex.AI agentic engineering series.
 ## Layout
 - `src/access_agent/gateway.py`: the one path every tool call takes (ADR 0001). It also works out whether the
   request settled the user and the group (ADR 0003) and which one pair the run has acted on (ADR 0004). Those
-  facts never come from the model.
+  facts never come from the model, and are kept in the directory's database.
 - `src/access_agent/policy.py` and `policy/rules.toml`: deny-by-default rules.
 - `src/access_agent/directory.py` and `seed.py`: the generated company.
 - `src/access_agent/audit.py`: the audit log. Triggers refuse updates and deletes.

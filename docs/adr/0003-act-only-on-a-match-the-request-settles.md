@@ -29,9 +29,6 @@ below 80 on all four of its misses and on 59 runs it completed, and the agent's 
 - The rule is a narrowing, not a proof. A request's filler words can happen to pick out one group: "needs access
   to the Sales one" contains "access", which matches only one of the two Sales groups. A caller that searches
   "access sales" gets a settled match the request didn't give. `tests/test_settle.py` keeps that case visible.
-- The check for "appears in the request" looks for the word anywhere in the text, so "ops" counts as present in
-  a request that says "laptops". It is left as it is in phase 1 because the published
-  runs were made on it.
 - The rule depends on how search works here: every word must match a group's name or description. A directory with
   fuzzier search would need a different test of "settled".
 - Both arms changed to work with it: the workflow records a department and searches again after a pick, and the
@@ -40,3 +37,12 @@ below 80 on all four of its misses and on 59 runs it completed, and the agent's 
 ## Amended 2026-11-16
 A group's exact name settles that group when the request contains the name as a word of its own, even if the name
 is also the start of another group's name (ADR 0004).
+
+## Amended 2026-11-16, second time
+Two fixes from a review of the code, scored as runs 9 and 10.
+
+- A search word counts as in the request only as a word of its own. Before, the check looked for the letters
+  anywhere, so "ops" counted as present in a request that said "laptops". A hyphen, a dot or an apostrophe ends a
+  word, so "finance" is in "Finance-Reports".
+- What the request settled, and the pair the run acted on (ADR 0004), are kept in the directory's database, keyed
+  by the run and the request's text. A request that pauses for an approval can be finished by a new process.

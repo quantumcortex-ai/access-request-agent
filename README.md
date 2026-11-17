@@ -4,6 +4,19 @@ By [QuantumCortex.AI](https://quantumcortex.ai). A worked example for our
 [agentic engineering series](https://quantumcortex.ai/series/): one IT access request, built as a fixed workflow and
 as an agent, and measured on the same eval set.
 
+## The two arms
+
+The same request is handled two ways. We call them the two arms, and every number below compares them.
+
+- **The workflow:** code runs the same steps in the same order every time, and calls the model at two set points.
+- **The agent:** the model picks each next step itself, using the same five tools.
+
+Both go through the same gateway and the same rules, so the only difference is who decides the next step.
+
+**How they compared:** on the smallest model, with the rules on, the workflow cost about a sixth as much for each
+completed task ($0.0002 against $0.0013). It wasn't the safer one. On the test set it made six wrong grants and
+the agent made none. On the bigger model neither made a wrong grant.
+
 ## The conclusion
 
 When an AI system can change who has access, put the control in code outside the model, and then test it on

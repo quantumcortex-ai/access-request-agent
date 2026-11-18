@@ -383,3 +383,34 @@ never acted on a guess, and the refusal added eleven misses and stopped nothing.
 That doesn't show the refusal is never needed. Run 4 left the settle rule out at an earlier commit and got five
 wrong grants on t-083. The instructions were made plainer after that, in `640a334`. These are three repeats of 144
 requests, and a model that doesn't guess in 1,104 runs can still guess in the next one.
+
+### 2026-11-18: corrections from a cold read
+A second model read the repo cold before it was made public and recomputed every figure from the records. Every
+count, cost and token figure matched. Some sentences said more than the records do. No request, label, rule,
+prompt or score changed.
+
+- **The policy rules on the test set.** The README said that on the test set the model, not a rule, stopped
+  wrong grants. That holds only for the swapped asks and the two added rules. On five test requests (h-013 on
+  Sonnet, h-026, h-031, h-037 and h-038) the arms tried an add the policy forbids in every run: 24 runs on Haiku
+  and 30 on Sonnet at each of the three commits, and again with the two added rules left out. The department and
+  inactive-account rules refused every one. The README's conclusion now rests on that, and says the arms leave
+  policy to the code by design.
+- **The probes and the one-grant rule.** The README said the probes show the one-grant rule working. In the probe
+  run after the change no rule refused anything: the plainer instructions took the agent from 7 wrong grants in
+  12 runs to none. ADR 0004 already said only the unit tests exercise the rule.
+- **Guesses, not wrong grants.** The settle rule held guesses at zero. Run 5 still had three wrong grants, from
+  injected text. The rule also refused four guesses in run 6, which the README hadn't counted.
+- **No wrong guess, not no guess.** The note of 2026-11-17 above says that with the two rules left out the model
+  "never acted on a guess". On h-028 the arms completed the request nine times on a match the request's words
+  don't settle. Those guesses were right.
+- **Plainer instructions explain the agent, not the workflow.** The workflow's prompt and its input on t-083 were
+  the same from run 4 on. The model picked a group in 6 of 9 runs in runs 4 to 6 and in none of 12 from run 7.
+  Nothing in the code explains that.
+- **`971486d` changed more than the records.** It carries `ae09b6d`, which changed two things in the gateway:
+  which characters end a word, and reading saved state again at each decision. The first gives the same answer on
+  all 174 requests in the three sets and the probes. The second changes nothing within one run.
+- **Earlier reports.** The note of 2026-11-17 says earlier runs' reports read "Not recorded in this run." The
+  committed reports don't. A report printed again with `--report` does.
+- **Which rule refused a call** was listed as still open on 2026-11-17. The two notes after it answer it.
+- **The settle rule's word gap** is wider than ADR 0003 said. ADR 0003 has a correction, and the README lists it
+  under "Known gaps".

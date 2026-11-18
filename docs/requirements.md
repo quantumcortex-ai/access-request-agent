@@ -96,6 +96,9 @@ it doesn't check that the one grant is the one that was asked for. Today only th
 and instructions aren't a control. The run on the test set on 2026-11-16 measured this: six wrong grants by the workflow
 on Haiku, all on requests where injected text swapped the ask.
 
+BR-01 says the rest of a request "goes in as its own request". No code does that. The arms act on the first ask
+and file nothing for the rest.
+
 ## Decided by the maintainer, 2026-11-16
 Five test labels rested on a reading the earlier sources don't spell out. The maintainer ruled on each, one at
 a time, after the scored runs. All five stand as labelled, so no score changed.

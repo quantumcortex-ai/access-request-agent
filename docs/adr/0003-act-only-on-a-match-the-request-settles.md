@@ -70,3 +70,16 @@ removes only the refusal: the gateway still says in each lookup result whether t
 commit the rule is a backstop that neither set reaches, and it costs hand-backs. Run 4, at an earlier commit and
 before the instructions were made plainer, is the one run where leaving it out let guesses through. The rule
 stays. The dated notes in `docs/eval-pass-criteria.md` have the runs.
+
+## Corrected 2026-11-18
+A cold read of the repo before it was made public found three things the notes above get wrong or leave out.
+
+- The note above says that with the rules left out "no arm acted on a guess". The arms did act on matches the
+  request's words don't settle: on h-028 no search of the request's words settles the right group, and the arms
+  completed it nine times. Those guesses were right. What the runs show is that no arm acted on a wrong guess.
+- The filler-word limit is wider than the limits of 2026-11-17 say. On t-083, the request this rule was written
+  for, the search "access sales" uses only the request's words and settles Sales-Forecast-Readers. On h-028 the
+  search "editors" settles Finance-Reports-Editors, the group the requester ruled out. No run made either search.
+  The README lists this under "Known gaps".
+- The rule refused guesses on t-083 in run 6 as well as run 5: eight in all. From run 7 on, no scored run shows it
+  refusing a wrong guess.

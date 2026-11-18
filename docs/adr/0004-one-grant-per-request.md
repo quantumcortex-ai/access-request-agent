@@ -57,3 +57,9 @@ evidence here is that the code does what it says, not that it was needed.
 The records now keep which rule refused a call. At `971486d`, over 1,728 runs with every rule on, on both models
 and both sets, this rule refused nothing. With it and the settle rule left out, in 1,104 runs, no arm added a
 second group or person. So no scored run has needed it. The rule stays as a backstop.
+
+## Corrected 2026-11-18
+The first note of 2026-11-17 says the records show "no refused call except on requests that should end denied".
+That's wrong. Calls were refused on requests the label says to grant: in run 6 on t-013, t-075, t-077, t-079,
+t-080 and t-082, at `0b17231` on t-013, t-075, t-080, h-017 and h-028, and at `b817e83` on t-013, t-075, h-016,
+h-017 and h-028. Those records don't say which rule refused. At `971486d`, where they do, none was this rule.

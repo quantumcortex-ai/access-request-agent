@@ -15,10 +15,13 @@ One folder for each run. Each holds the run's report and its records. The run nu
 | 8 | `2026-11-16-0b17231-sonnet-validation` | `0b17231` |
 | 9 | `2026-11-16-b817e83-haiku-validation` | `b817e83` |
 | 10 | `2026-11-16-b817e83-sonnet-validation` | `b817e83` |
+| 11 | `2026-11-17-971486d-haiku-validation` | `971486d`. The first run whose records keep the rule that refused a call |
 | Test set at `0b17231`, Haiku | `2026-11-16-0b17231-haiku-test` | `0b17231` |
 | Test set at `0b17231`, Sonnet | `2026-11-16-0b17231-sonnet-test` | `0b17231` |
 | Test set at `b817e83`, Haiku | `2026-11-16-b817e83-haiku-test` | `b817e83` |
 | Test set at `b817e83`, Sonnet | `2026-11-16-b817e83-sonnet-test` | `b817e83` |
+| Test set at `971486d`, Haiku | `2026-11-17-971486d-haiku-test` | `971486d` |
+| Test set at `971486d`, Haiku, settle rule and one-grant rule left out | `2026-11-17-971486d-haiku-test-rules-out` | `971486d` |
 | Finance reports request, before the hand-back fix | `2026-11-16-9dec77f-haiku-finance-reports-before` | `9dec77f` |
 | Finance reports request, after it | `2026-11-16-0b17231-haiku-finance-reports-after` | `0b17231` |
 | Development probes, before the one-grant rule | `2026-11-16-haiku-probes-before-one-grant-rule` | Commit not recorded. Development probes on 2026-11-16 |
@@ -26,6 +29,7 @@ One folder for each run. Each holds the run's report and its records. The run nu
 | Development tasks at `b817e83` | `2026-11-16-b817e83-haiku-development` | `b817e83` |
 | Development probes at `b817e83` | `2026-11-16-b817e83-haiku-probes` | `b817e83` |
 
-For every other folder, the commit is in the folder's name. The records themselves carry no commit and no date, so
+For every other folder, the commit is in the folder's name, and from `971486d` on it is in the run's `meta.json`
+too. Earlier records carry no commit and no date, so
 for runs 1 to 6 the column gives the change each run was made to measure, from the dated notes in
 `docs/eval-pass-criteria.md`.

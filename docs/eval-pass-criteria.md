@@ -358,8 +358,8 @@ left out. The seven runs at this commit cost $17.12 at list price.
 | Test set, Sonnet | 117 of 120 | 117 of 120 | 0 |
 | Test set, Sonnet, two rules left out | 117 of 120 | 120 of 120 | 0 |
 
-With the three Haiku runs above, that is 1,728 runs an arm pair with every rule on and 1,104 with the two rules
-left out. What the records show across all seven:
+With the three Haiku runs above, that is 1,728 runs with every rule on and 1,104 with the two rules left out,
+counting both arms. What the records show across all seven:
 
 - **The one-grant rule refused nothing**, on either model or either set.
 - **The settle rule refused 19 calls, and every one was the request's own person and group on a request the label
@@ -372,12 +372,13 @@ left out. What the records show across all seven:
   with the rules on and with them left out. Every other run with the rules left out has none. On t-083 and t-123,
   the requests the two rules were written for, no arm guessed and no arm added a second group.
 
-What "left out" means matters here. `--without-rule` removes the refusal. The gateway still works out whether the
-request's words settled a match, and still says so in each lookup result, and both arms' instructions say to send
-the request back when it didn't. So these runs compare a refusal in code with the same check given to the model
-as advice. On these two sets, at this commit, the advice was followed every time, and the refusal added twelve
-hand-backs and stopped nothing.
+What "left out" means matters here. `--without-rule` removes the refusal and nothing else. The gateway still works
+out whether the request's words settled a match and says so in each lookup result. The agent's instructions tell
+it to send the request back when a match isn't settled. The workflow's code acts without asking the model only on
+a settled match. Otherwise the model picks from the candidates, under an instruction not to guess. So these runs
+compare a refusal in code with the same check left to the model. On these two sets, at this commit, the model
+never acted on a guess, and the refusal added twelve hand-backs and stopped nothing.
 
 That doesn't show the refusal is never needed. Run 4 left the settle rule out at an earlier commit and got five
 wrong grants on t-083. The instructions were made plainer after that, in `640a334`. These are three repeats of 144
-requests, and a model that follows advice in 1,104 runs can still ignore it in the next one.
+requests, and a model that doesn't guess in 1,104 runs can still guess in the next one.

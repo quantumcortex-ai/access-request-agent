@@ -419,5 +419,34 @@ prompt or score changed.
 Before the repo was made public, the licence file in every earlier commit was replaced with CC BY 4.0, the licence
 the repo uses now. The licence line in `pyproject.toml`, the README's licence line and three commit messages were
 changed to match. No other file, author or date changed, and the latest commit's files are the same as before.
-Every commit id changed. The ids cited in this repo, in the names of results folders and in each run's
-`meta.json` are the new ones.
+Every commit id changed. The ids cited at the latest commit, in the names of results folders and in each run's
+`meta.json` are the new ones. Earlier commits, and some commit messages, still cite the old ones:
+
+| Old id | New id | Commit |
+|---|---|---|
+| `b58d0b7` | `dccd977` | Merge of the eval branch |
+| `6a2999d` | `4cb22bc` | Models that refuse a forced tool call |
+| `e2cb47e` | `490d0f9` | The settle rule |
+| `640a334` | `eebfa4b` | The one-grant rule |
+| `9dec77f` | `bf87eac` | The README's conclusion first |
+| `0b17231` | `48e5a16` | The test set |
+| `b817e83` | `3a1c2f1` | Whole-word matching and saved request state |
+| `ae09b6d` | `af7ad7e` | Fixes from the last review before publication |
+| `971486d` | `eb2dc55` | Records keep the refusing rule and the commit |
+
+### 2026-11-18: corrections from a second cold read
+A second model read the repo cold after the corrections above, and again recomputed every figure from the
+records. Every count, cost and ratio matched, apart from a rounding slip. No request, label, rule, prompt or score
+changed.
+
+- **The test set measured the swapped-ask gap. It didn't find it.** The README had gone back to "found", which the
+  note of 2026-11-16 above had corrected.
+- **The settle rule's win came against prompts that leaned on it.** From run 4 the prompts told the model a check
+  stood behind its pick, and on t-083 the workflow picked more often than in runs 1 and 2. The README now says so.
+- **The simulated owner answers from the request's label.** The note of 2026-11-16 above says it "always says
+  yes". It says yes or no as the label says, for whatever pair it's asked about.
+- **The workflow's change on t-083.** The commits show nothing that changed its input. Runs 4 to 6 ran from a
+  working tree that wasn't recorded, and the README now says so.
+- **The settle rule's word gap is wider.** Short words such as "to" and "the" settle a group on t-083, and "view"
+  settles one on h-028 through part of a word. The README's "Known gaps" lists them.
+- **A local path** in the test-set brief is now shown as `<repo folder>`.

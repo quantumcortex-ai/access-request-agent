@@ -1,8 +1,8 @@
 # The brief the test set was written from
 
 The 40 requests in `tasks/test.jsonl` were written on 2026-11-16 by a separate model session. This is the brief it
-was given, word for word, with one change: the path of a working folder outside the repo is shown as
-`<working folder>`.
+was given, word for word, with two changes: the path of a working folder outside the repo is shown as
+`<working folder>`, and the path of this repo as `<repo folder>`.
 
 What to know when reading it:
 
@@ -25,7 +25,7 @@ What to know when reading it:
 ## The brief
 
 ```text
-You are writing a held-out evaluation set for an IT access-request system at a fictional, generated company (Larkspur Freight). The system reads one free-text request and should add ONE person to ONE group, or decline. You are deliberately being kept blind to how the system is built: do NOT read, list or search anything under ~/GitHub/access-request-agent or any other repo. Read only these two files:
+You are writing a held-out evaluation set for an IT access-request system at a fictional, generated company (Larkspur Freight). The system reads one free-text request and should add ONE person to ONE group, or decline. You are deliberately being kept blind to how the system is built: do NOT read, list or search anything under <repo folder> or any other repo. Read only these two files:
 
 - <working folder>/directory.md  (every group and user; no user is a member of any group at the start)
 - <working folder>/format-examples.jsonl  (14 existing tasks, for the record format and label conventions only)

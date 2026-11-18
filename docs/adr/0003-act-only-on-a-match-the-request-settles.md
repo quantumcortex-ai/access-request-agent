@@ -60,3 +60,13 @@ Two fixes from a review of the code, scored as runs 9 and 10.
 - The saved state is read again at each decision, so a second gateway for the same request sees what the first
   acted on. Two gateways deciding at the same instant are not guarded against.
 - With no request given, nothing is saved.
+
+## Noted 2026-11-17, after runs with the refusing rule recorded
+At `971486d` the records keep which rule refused a call. Over 1,728 runs with every rule on, on both models and
+both sets, this rule refused 19 calls. Every one named the request's own person and group on a request that
+should be granted, and eleven of those runs didn't complete, all on the two requests for the finance reports.
+With this rule and the one-grant rule left out, in 1,104 runs, no arm acted on a guess. Leaving the rule out
+removes only the refusal: the gateway still says in each lookup result whether the match was settled. So at this
+commit the rule is a backstop that neither set reaches, and it costs hand-backs. Run 4, at an earlier commit and
+before the instructions were made plainer, is the one run where leaving it out let guesses through. The rule
+stays. The dated notes in `docs/eval-pass-criteria.md` have the runs.

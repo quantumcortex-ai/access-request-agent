@@ -52,3 +52,8 @@ No scored run shows this rule refusing a call. After the change to the instructi
 grant on the validation set or the test set, and no refused call except on requests that should end denied. The
 records keep each call's tool and outcome and not the rule that refused it, so that is as far as they go. The rule is exercised by `tests/test_one_grant.py` and nothing else, so its
 evidence here is that the code does what it says, not that it was needed.
+
+## Noted 2026-11-17, after runs with the refusing rule recorded
+The records now keep which rule refused a call. At `971486d`, over 1,728 runs with every rule on, on both models
+and both sets, this rule refused nothing. With it and the settle rule left out, in 1,104 runs, no arm added a
+second group or person. So no scored run has needed it. The rule stays as a backstop.

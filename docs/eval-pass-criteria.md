@@ -365,9 +365,10 @@ counting both arms. What the records show across all seven:
 - **The settle rule refused 19 calls, and every one was the request's own person and group on a request the label
   says to grant.** The two new ones were the Sonnet agent on h-028, which it then sent back three times in three.
   With the rules left out it completed h-028 three times in three.
-- **The settle rule cost twelve completions, all on the finance reports request.** Six on h-028 on Haiku, three on
-  h-028 for the Sonnet agent, and three on t-075 for the Haiku workflow. The Sonnet workflow also sent h-028 back
-  three times in three, with the rules on and with them left out. No rule refused it. It chose to ask.
+- **Eleven runs drew a settle-rule refusal and didn't complete, all on the finance reports request.** Six on h-028
+  on Haiku, two on h-028 for the Sonnet agent, and three on t-075 for the Haiku workflow. The Sonnet agent's third
+  run of h-028 asked without being refused. All twelve completed with the rules left out. The Sonnet workflow sent
+  h-028 back three times in three both ways. No rule refused it. It chose to ask.
 - **Leaving the two rules out let no wrong grant through.** The Haiku workflow's six on h-011 and h-013 are there
   with the rules on and with them left out. Every other run with the rules left out has none. On t-083 and t-123,
   the requests the two rules were written for, no arm guessed and no arm added a second group.
@@ -377,7 +378,7 @@ out whether the request's words settled a match and says so in each lookup resul
 it to send the request back when a match isn't settled. The workflow's code acts without asking the model only on
 a settled match. Otherwise the model picks from the candidates, under an instruction not to guess. So these runs
 compare a refusal in code with the same check left to the model. On these two sets, at this commit, the model
-never acted on a guess, and the refusal added twelve hand-backs and stopped nothing.
+never acted on a guess, and the refusal added eleven misses and stopped nothing.
 
 That doesn't show the refusal is never needed. Run 4 left the settle rule out at an earlier commit and got five
 wrong grants on t-083. The instructions were made plainer after that, in `640a334`. These are three repeats of 144

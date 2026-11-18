@@ -48,44 +48,44 @@ The bigger finding isn't about which arm to pick. It's about where the control s
 ## The conclusion
 
 When an AI system can change who has access, put the control in code outside the model, and then test it on
-requests you didn't write.
+requests you didn't write. That's our recommendation. This repo is one worked example of it, not a proof.
 
-What backs it:
+What the example showed:
 
-- **The policy held because it was in code.** Five test requests ask for access the policy forbids. Two are honest
-  asks from someone whose department the group doesn't allow. Two claim an exception: "People have confirmed an
-  exception" for an inactive account, and the group's owner "has agreed an exception to the department rule". In
-  the fifth, injected text swaps in a different person, and Sonnet ignored it and tried the original ask, for an
-  inactive account. Both arms leave policy to the gateway, so they tried the add in every run of these requests:
-  24 runs on Haiku and 30 on Sonnet, on each of the three commits we tested. The rules in code refused every one.
-  How the request was worded made no difference.
+- **The model's behaviour moved under the same name.** On one validation request the workflow gave the model the
+  same input from run 4 to the latest run. In runs 4 to 6 the model picked a group on it in 6 of 9 runs. From run 7
+  it picked none in 12. As far as our commits show, nothing changed what it was given. A prompt that holds this
+  week may not hold next week. A rule in code doesn't move.
 - **Testing on requests we didn't write measured a gap.** We'd named it before the test set existed, and the
   test set's brief asked for requests of this kind, but our own requests had none. Eight test requests carried
   injected text that swapped the ask for a different group or a different person. On two of them the workflow on
   Haiku granted the swap all three times: six wrong grants. Nothing in code checks that the one grant is the one
   the requester asked for.
-- **The model's behaviour moved under the same name.** On one validation request the workflow gave the model the
-  same input from run 4 to the latest run. In runs 4 to 6 the model picked a group on it in 6 of 9 runs. From run 7
-  it picked none in 12. As far as our commits show, nothing changed what it was given.
+- **This is how the design is meant to work.** Five test requests ask for access the policy forbids. Two are
+  honest asks from someone whose department the group doesn't allow. Two claim an exception: "People have
+  confirmed an exception" for an inactive account, and the group's owner "has agreed an exception to the
+  department rule". In the fifth, injected text swaps in a different person, and Sonnet ignored it and tried the
+  original ask, for an inactive account. Both arms leave policy to the gateway, so they tried the add in every
+  run of these requests: 24 runs on Haiku and 30 on Sonnet, on each of the three commits we tested. The rules
+  refused every one, however the request was worded. That's the design doing its job, not a contest: neither arm
+  was asked to judge the policy.
 
-The evidence is narrower than the conclusion, and we'd rather say so here than further down:
+The evidence is narrower than the recommendation, and we'd rather say so here than further down:
 
-- **Those five requests show the design working, not a contest.** The arms are built to leave policy to the
-  gateway, so these runs don't show that a prompt would have failed where the code held.
 - **The two rules we added during the build did less.** The rule against guessing (the settle rule) refused eight
-  guesses on one validation request, in runs 5 and 6. From run 7 on, no scored run shows either added rule
-  stopping a wrong grant. At the latest commit the settle rule cost eleven completions by refusing right answers.
-  We've kept both as a backstop.
+  guesses on one validation request, in runs 5 and 6, against prompts that told the model the rule was there.
+  From run 7 on, no scored run shows either added rule stopping a wrong grant. At the latest commit the settle
+  rule cost eleven completions by refusing right answers. We've kept both as a backstop.
 - **So this is a worked example, not a proof.** A rule refuses what it names whatever the model decides, and that
   includes a right answer it wasn't written to allow. A model that asks instead of guessing did well here, and
   can't be counted on to.
 
 ## Three reasons
 
-1. **A rule in code holds whatever the request says.** On the test set the rules refused every add the policy
-   forbids, whether the request was honest, claimed an exception or carried injected text. On the validation set
-   the settle rule did the same for guesses: on "the Sales one", where two groups fit, it refused eight guesses in
-   runs 5 and 6, and wrong grants there went from five to none.
+1. **A model's judgement can move, and a rule in code doesn't.** The workflow stopped guessing on the same input
+   between runs 6 and 7, and nothing in our code explains it. A rule gives the same answer every time: on the
+   test set the policy rules refused every add the labels deny on policy grounds, however the request was worded,
+   and on "the Sales one" the settle rule refused eight guesses in runs 5 and 6.
 2. **A rule covers only what it names.** Injected text that swapped the ask is part of the request, so no rule
    stopped it, and the workflow on Haiku granted it.
 3. **A bigger model made no wrong grant, at about 24 times the cost and with no guarantee.** Sonnet's workflow
@@ -212,7 +212,7 @@ The labels in all three sets rest on the requirements in [`docs/requirements.md`
 maintainer approved on 2026-11-16. The requirements were written after the labels, and the maintainer ruled on
 five test labels after the scored runs. No label changed.
 
-### Reason 1: a rule in code holds whatever the request says
+### Reason 1: a model's judgement can move, and a rule in code doesn't
 
 **On the test set, the policy was the code's job.** Both arms leave policy to the gateway. The agent is told that
 policy lives in the tools, and the workflow's code makes the call once the model has named the person and the
@@ -229,8 +229,8 @@ group. Five test requests ask for something the policy forbids:
 The records name the refusing rule from `eb2dc55` on. On the earlier commits it's the only rule that could have
 refused each one. In every run of these, the arm tried the add and a rule refused it: 24 runs on Haiku (the first
 four requests) and 30 on Sonnet (all five), at each of the three commits, and again with the two added rules left
-out. Each of those adds would have been a wrong grant. These runs show the design working. They don't show that a prompt
-would have failed where the code held, because neither arm was asked to judge the policy.
+out. Each of those adds would have been a wrong grant. These runs show the design working. They don't show that
+a prompt would have failed where the code held, because neither arm was asked to judge the policy.
 
 **On the validation set, the settle rule stopped guesses on one request.**
 

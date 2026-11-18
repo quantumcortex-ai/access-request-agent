@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-One IT access request, built as a fixed workflow and as an agent, measured on one eval set. Companion to the
+One IT access request, built as a fixed workflow and as an agent, measured on the same requests. Companion to the
 QuantumCortex.AI agentic engineering series.
 
 ## Rules

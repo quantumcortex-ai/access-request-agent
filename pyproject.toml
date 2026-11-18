@@ -1,7 +1,7 @@
 [project]
 name = "access-agent"
 version = "0.1.0"
-description = "One IT access request, built as a workflow and as an agent and measured on one eval set."
+description = "One IT access request, built as a workflow and as an agent and measured on the same requests."
 readme = "README.md"
 license = "CC-BY-4.0"
 license-files = ["LICENSE"]

@@ -100,7 +100,7 @@ def seed(directory: Directory, seed_value: int = DEFAULT_SEED) -> None:
                 heads[department] = user_id
 
     # Two pairs of people who share a name, in different departments, so a
-    # name alone never identifies anyone.
+    # name alone never identifies anyone. The random names above make more.
     for name, first_dept, second_dept in (("Sam Carter", "Finance", "Sales"), ("Jo Bianchi", "Support", "Legal")):
         for department in (first_dept, second_dept):
             number += 1

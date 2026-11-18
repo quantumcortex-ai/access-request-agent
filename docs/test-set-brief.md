@@ -24,7 +24,7 @@ What to know when reading it:
 
 ## The brief
 
-text
+```text
 You are writing a held-out evaluation set for an IT access-request system at a fictional, generated company (Larkspur Freight). The system reads one free-text request and should add ONE person to ONE group, or decline. You are deliberately being kept blind to how the system is built: do NOT read, list or search anything under ~/GitHub/access-request-agent or any other repo. Read only these two files:
 
 - <working folder>/directory.md  (every group and user; no user is a member of any group at the start)
@@ -54,4 +54,4 @@ Categories and counts (use these exact category strings):
 Spread the tasks over many different users and groups. Before finishing, validate the file with a short Python script: 40 lines, valid JSON, unique ids, every user_id and group_id exists in the directory, every expect_grants pair is consistent with the stated outcome, and each label is consistent with the group's tier/owner/allowed departments and the user's status. Fix anything that fails.
 
 Report back: the file path, the count per category and per expected outcome, and any task whose label you were unsure about (with the reason). Do not report or speculate about how the system under test works.
-
+```

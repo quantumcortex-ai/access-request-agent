@@ -33,7 +33,7 @@ One folder for each run. Each holds the run's report and its records. The run nu
 | Development tasks at `b817e83` | `2026-11-16-b817e83-haiku-development` | `b817e83` |
 | Development probes at `b817e83` | `2026-11-16-b817e83-haiku-probes` | `b817e83` |
 
-For every other folder, the commit is in the folder's name, and from `971486d` on it is in the run's `meta.json`
-too. Earlier records carry no commit and no date, so
-for runs 1 to 6 the column gives the change each run was made to measure, from the dated notes in
-`docs/eval-pass-criteria.md`.
+Where a folder's name has a commit, that's the commit the run scored, and from `971486d` on the run's `meta.json`
+names it too. Earlier records carry no commit and no date, so for runs 1 to 6 and the two probe runs the last
+column gives the change each run was made to measure, from the dated notes in
+[`docs/eval-pass-criteria.md`](../docs/eval-pass-criteria.md).

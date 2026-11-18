@@ -480,4 +480,20 @@ code, an audit record) and economics (cost per completed task).
 
 ## Licence
 
-[Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/) (CC BY 4.0). See `LICENSE`.
+[Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/) (CC BY 4.0). It
+covers everything here: the code, this write-up, the three sets of requests and the results. See `LICENSE`.
+
+You can copy, change and reuse any of it, in commercial work too, as long as you give credit. To give credit:
+
+- name the source: `access-request-agent` by QuantumCortex.AI
+- link to this repository and to the licence
+- say what you changed, if anything
+
+For example:
+
+> From [access-request-agent](https://github.com/quantumcortex-ai/access-request-agent) by QuantumCortex.AI,
+> [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Changed: the policy rules.
+
+`CITATION.cff` holds the same details, and GitHub's "Cite this repository" button reads it.
+
+Copyright 2026 QuantumCortex LLC.

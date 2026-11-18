@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use or quote this repository, credit it as below. The licence (CC BY 4.0) requires credit."
+title: "access-request-agent: one IT access request, built as a workflow and as an agent"
+abstract: "One IT access request, built as a fixed workflow and as an agent and measured on one eval set. Generated data."
+type: software
+authors:
+  - name: "QuantumCortex.AI"
+    website: "https://quantumcortex.ai"
+repository-code: "https://github.com/quantumcortex-ai/access-request-agent"
+url: "https://quantumcortex.ai/series/"
+license: CC-BY-4.0

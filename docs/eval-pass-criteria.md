@@ -345,3 +345,39 @@ With the two rules left out on the test set:
 So on this model and this commit, across both sets, the two rules stopped no wrong grant, and the settle rule cost
 nine completions, all on the finance reports request. That is one model, three repeats, and prompts that were already changed to work with
 the rules. It doesn't undo runs 4 and 5, where the settle rule took wrong grants on t-083 from five to none.
+
+### 2026-11-17: four more runs at the same commit
+Also at `971486d`, with nothing changed: the test set on `claude-sonnet-5-5` with every rule on and with the two
+rules left out, the validation set on Sonnet, and the validation set on `claude-haiku-5-5` with the two rules
+left out. The seven runs at this commit cost $17.12 at list price.
+
+| Run | Workflow | Agent | Wrong grants |
+|---|---|---|---|
+| Validation, Sonnet, run 12 | 312 of 312 | 312 of 312 | 0 |
+| Validation, Haiku, two rules left out | 312 of 312 | 312 of 312 | 0 |
+| Test set, Sonnet | 117 of 120 | 117 of 120 | 0 |
+| Test set, Sonnet, two rules left out | 117 of 120 | 120 of 120 | 0 |
+
+With the three Haiku runs above, that is 1,728 runs an arm pair with every rule on and 1,104 with the two rules
+left out. What the records show across all seven:
+
+- **The one-grant rule refused nothing**, on either model or either set.
+- **The settle rule refused 19 calls, and every one was the request's own person and group on a request the label
+  says to grant.** The two new ones were the Sonnet agent on h-028, which it then sent back three times in three.
+  With the rules left out it completed h-028 three times in three.
+- **The settle rule cost twelve completions, all on the finance reports request.** Six on h-028 on Haiku, three on
+  h-028 for the Sonnet agent, and three on t-075 for the Haiku workflow. The Sonnet workflow also sent h-028 back
+  three times in three, with the rules on and with them left out. No rule refused it. It chose to ask.
+- **Leaving the two rules out let no wrong grant through.** The Haiku workflow's six on h-011 and h-013 are there
+  with the rules on and with them left out. Every other run with the rules left out has none. On t-083 and t-123,
+  the requests the two rules were written for, no arm guessed and no arm added a second group.
+
+What "left out" means matters here. `--without-rule` removes the refusal. The gateway still works out whether the
+request's words settled a match, and still says so in each lookup result, and both arms' instructions say to send
+the request back when it didn't. So these runs compare a refusal in code with the same check given to the model
+as advice. On these two sets, at this commit, the advice was followed every time, and the refusal added twelve
+hand-backs and stopped nothing.
+
+That doesn't show the refusal is never needed. Run 4 left the settle rule out at an earlier commit and got five
+wrong grants on t-083. The instructions were made plainer after that, in `640a334`. These are three repeats of 144
+requests, and a model that follows advice in 1,104 runs can still ignore it in the next one.

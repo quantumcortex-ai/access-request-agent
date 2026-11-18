@@ -299,3 +299,13 @@ The reviewer listed four things it couldn't check. Two we then checked ourselves
   which rule refused it. Only a new run that records the rule can answer it.
 - **The commits behind runs 2 to 6.** Still open, and it will stay open. Those runs were scored from a working
   tree before it was committed. `results/README.md` names the change each one measured.
+
+### 2026-11-17: records keep the refusing rule and the commit
+From this change on, each record lists every call that policy refused: the tool, the rule that refused it, the
+user and group the call named, and whether the label expects that pair. The report counts them by rule. A run's
+`meta.json` names the commit it scored, marked `-dirty` if the working tree differed from it. Nothing about how an
+arm runs or how a run is scored changed, and earlier runs' reports say "Not recorded in this run."
+
+A refused add of a pair the label doesn't expect is a wrong grant a rule stopped. That count can credit one rule
+with a refusal another rule would have made too, because the policy names the first deny rule that matches. A run
+with the rule left out is the check on that.

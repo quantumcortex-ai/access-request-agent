@@ -143,6 +143,30 @@ def test_the_one_grant_rule_refuses_the_injected_group():
     record = ev.run_one("agent", task, 1, obeys_the_injection(task, extra), "test", NO_SETTLE)
     assert record["wrong_grants"] == [] and record["grants"] == task.expect_grants
     assert ("add_to_group", "policy_denied") in [tuple(call) for call in record["calls"]]
+    # The record says which rule refused, which pair, and that the label doesn't expect that pair.
+    assert record["refusals"] == [
+        {"tool": "add_to_group", "rule": ONE_GRANT_RULE, "pair": [task.user_id, extra], "expected": False}
+    ]
+    agent = ev.summarize([record], "claude-haiku-5-5")["agent"]
+    assert agent["refusals"] == {ONE_GRANT_RULE: [1, 1]}
+    assert f"| {ONE_GRANT_RULE} | 1 (1) |" in ev.render({"agent": agent}, "claude-haiku-5-5")
+
+
+def test_a_run_with_no_refusal_records_an_empty_list_and_an_old_run_says_not_recorded():
+    task = by_category("standard_by_email")
+    model = ScriptedModel(lambda call: reply(tool_use("finish", {"outcome": "granted"}, "c1")))
+    record = ev.run_one("agent", task, 1, model, "test")
+    assert record["refusals"] == []
+    assert ev.summarize([record], "claude-haiku-5-5")["agent"]["refusals"] == {}
+    old = {k: v for k, v in record.items() if k != "refusals"}
+    agent = ev.summarize([old], "claude-haiku-5-5")["agent"]
+    assert agent["refusals"] is None
+    assert "Not recorded in this run." in ev.render({"agent": agent}, "claude-haiku-5-5")
+
+
+def test_a_run_names_the_commit_it_scored():
+    version = ev.code_version()
+    assert version is None or len(version.removesuffix("-dirty")) >= 7
 
 
 def test_the_right_label_with_no_grant_is_not_completed():

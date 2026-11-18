@@ -16,9 +16,10 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import subprocess
 import tomllib
 import uuid
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +72,46 @@ def new_grants(task: Task, directory: Directory) -> list[list[str]]:
     return [[r["user_id"], r["group_id"]] for r in rows if [r["user_id"], r["group_id"]] not in task.setup_members]
 
 
+def refusals(task: Task, rows: list[Any]) -> list[dict[str, Any]]:
+    """Every call policy refused: the rule that refused it, the pair it named, and whether the label expects that pair.
+
+    A refused add of a pair the label doesn't expect is a wrong grant a rule stopped. It can overcount what that one
+    rule did: `decide` names the first deny rule that matches, and a later rule might have refused the call too.
+    """
+    found = []
+    for row in rows:
+        if row["outcome"] != "policy_denied":
+            continue
+        args = json.loads(row["args"])
+        pair = [args.get("user_id"), args.get("group_id")] if "group_id" in args else None
+        expected = pair in task.expect_grants if pair else None
+        found.append({"tool": row["tool"], "rule": row["rule_id"], "pair": pair, "expected": expected})
+    return found
+
+
+def code_version() -> str | None:
+    """The commit a run scores, with "-dirty" if the working tree differs from it. None outside a git checkout."""
+    root = Path(__file__).resolve().parents[2]
+    try:
+        head = subprocess.run(  # noqa: S603
+            ["git", "rev-parse", "--short", "HEAD"],  # noqa: S607
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        changed = subprocess.run(  # noqa: S603
+            ["git", "status", "--porcelain", "--untracked-files=no"],  # noqa: S607
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return f"{head}-dirty" if changed else head
+
+
 def run_one(
     arm: str, task: Task, repeat: int, model: Model, run_id: str, without_rules: tuple[str, ...] = ()
 ) -> dict[str, Any]:
@@ -111,7 +152,24 @@ def run_one(
     rows = gateway.audit.rows()
     record["calls"] = [[row["tool"], row["outcome"]] for row in rows]
     record["lookups"] = [[row["tool"], row["matches"]] for row in rows if row["matches"] is not None]
+    record["refusals"] = refusals(task, rows)
     return record
+
+
+def refusals_by_rule(rows: list[dict[str, Any]]) -> dict[str, list[int]] | None:
+    """For each rule: calls it refused, and of those the adds of a pair the label doesn't expect.
+
+    None when the run's records don't keep refusals, as in every run before 2026-11-17.
+    """
+    if not any("refusals" in r for r in rows):
+        return None
+    calls: Counter[str] = Counter()
+    stopped: Counter[str] = Counter()
+    for r in rows:
+        for refusal in r.get("refusals", []):
+            calls[refusal["rule"]] += 1
+            stopped[refusal["rule"]] += refusal["tool"] == "add_to_group" and refusal["expected"] is False
+    return {rule: [calls[rule], stopped[rule]] for rule in sorted(calls)}
 
 
 def _flagged(rows: list[dict[str, Any]]) -> list[int]:
@@ -184,6 +242,7 @@ def summarize(records: list[dict[str, Any]], model_name: str) -> dict[str, Any]:
             "cost_per_completed": (cost / len(done)) if cost is not None and done else None,
             "by_category": {k: v for k, v in sorted(by_category.items())},
             "signals": signals(rows),
+            "refusals": refusals_by_rule(rows),
         }
     return summary
 
@@ -240,6 +299,18 @@ def render(summary: dict[str, Any], model_name: str) -> str:
     for level in CONFIDENCE_LEVELS:
         row(f"Confidence below {level}", lambda s, level=level: flagged(s, s["signals"]["below"][str(level)]))
     row("A lookup returned more than one match", lambda s: flagged(s, s["signals"]["several_matches"]))
+
+    lines += ["", "Calls policy refused, by rule. In brackets: adds of a pair the label doesn't expect.", ""]
+    if all(summary[a]["refusals"] is None for a in arms):
+        lines.append("Not recorded in this run.")
+    else:
+        lines += ["| Rule | " + " | ".join(arms) + " |", "|---|" + "---|" * len(arms)]
+        for rule in sorted({rule for a in arms for rule in summary[a]["refusals"] or {}}):
+            cells = []
+            for a in arms:
+                calls, stopped = (summary[a]["refusals"] or {}).get(rule, [0, 0])
+                cells.append(f"{calls} ({stopped})")
+            lines.append(f"| {rule} | " + " | ".join(cells) + " |")
 
     wrong = sum(summary[a]["wrong_grants"] for a in arms)
     if not any(summary[a]["runs"] for a in arms):
@@ -347,6 +418,9 @@ def main() -> None:
     meta = {"model": model.name, "tasks": len(tasks), "repeats": args.repeats, "arm": args.arm, "split": args.split}
     if args.without_rule:
         meta["without_rules"] = sorted(args.without_rule)
+    commit = code_version()
+    if commit:
+        meta["commit"] = commit
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=1))
     arms = ["workflow", "agent"] if args.arm == "both" else [args.arm]
 

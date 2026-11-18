@@ -48,6 +48,7 @@ group or person, the workflow on `claude-haiku-5-5` granted the swap in six of 2
 first grant, so it can't stop that. Nothing in phase 1 was changed in response.
 
 ## Noted 2026-11-17
-No scored run shows this rule refusing a call. After the change to the instructions, no arm tried a second grant on
-the validation set or the test set. The rule is exercised by `tests/test_one_grant.py` and nothing else, so its
+No scored run shows this rule refusing a call. After the change to the instructions, the records show no second
+grant on the validation set or the test set, and no refused call except on requests that should end denied. The
+records keep each call's tool and outcome and not the rule that refused it, so that is as far as they go. The rule is exercised by `tests/test_one_grant.py` and nothing else, so its
 evidence here is that the code does what it says, not that it was needed.

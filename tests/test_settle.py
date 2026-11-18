@@ -10,7 +10,7 @@ from access_agent import eval as ev
 from access_agent.agent import ACTOR as AGENT
 from access_agent.agent import build_agent
 from access_agent.approval import owner_says, run
-from access_agent.gateway import SETTLE_RULE, grounded
+from access_agent.gateway import ONE_GRANT_RULE, SETTLE_RULE, grounded
 from access_agent.llm import Reply, ScriptedModel, tool_use
 from access_agent.tasks import load_tasks
 from access_agent.workflow import ACTOR as WORKFLOW
@@ -82,7 +82,7 @@ def test_a_gateway_sees_what_another_one_acted_on_since_it_started(directory):
 
 
 def test_a_new_gateway_for_the_same_request_keeps_what_was_settled(directory):
-    request = "Please add Sam Carter from Sales to the sales team group"
+    request = "Please add Sam Carter from Sales to the sales team group, and to Sales-Forecast-Readers"
     first = gateway_for(directory, request)
     user = first.call("lookup_user", {"query": "Sam Carter", "department": "Sales"}, task_id="t")
     group = first.call("find_groups", {"query": "sales team"}, task_id="t")
@@ -96,7 +96,8 @@ def test_a_new_gateway_for_the_same_request_keeps_what_was_settled(directory):
     other = gid(directory, "Sales-Forecast-Readers")
     again.call("find_groups", {"query": "Sales-Forecast-Readers"}, task_id="t")
     refused = again.call("add_to_group", {"user_id": user_id, "group_id": other}, task_id="t")
-    assert refused.error is ErrorCode.POLICY_DENIED
+    # The request names this group too, so only the saved first grant can refuse it.
+    assert refused.error is ErrorCode.POLICY_DENIED and refused.rule_id == ONE_GRANT_RULE
 
     # A different request starts with nothing settled.
     assert not gateway_for(directory, "Something else entirely").settled(user_id, group_id)

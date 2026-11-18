@@ -23,3 +23,12 @@ keyless sign-in to Claude on Microsoft Foundry.
 - A reader needs no tracing account. Tracing can be added later without changing how the numbers are counted.
 - We carry our own tool loop, about 100 lines, in place of a framework's. It's the part readers most need to see.
 - LangChain's model wrappers and callbacks aren't in play, so tools that hook into them need an adapter.
+
+## Amended 2026-11-17
+Two lines above say more than is true.
+
+- "The agent is forced to call a tool on every turn" holds for `claude-haiku-5-5`. `claude-sonnet-5-5` and the
+  larger models refuse a forced tool call, so for them the arm asks for one in the system prompt (`llm.py`). A
+  comparison between models carries that difference.
+- "The comparison is about the pattern" leaves out that the two arms have different prompts. The README's runs 4
+  and 5 show a change to the agent's prompt causing wrong grants, so the prompts are part of what is compared.

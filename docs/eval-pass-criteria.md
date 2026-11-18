@@ -125,7 +125,8 @@ there only:
   request.
 
 On the dev request the workflow went from 3 of 3 to 16 of 16. The agent went from 1 of 3 to 6 of 13, so it still
-hands this one back about half the time.
+hands this one back about half the time. (These counts came from runs that weren't kept. The notes of 2026-11-16
+below replace them.)
 
 A test set, `tasks/test.jsonl`: 40 requests in five kinds.
 
@@ -244,7 +245,8 @@ note of 2026-11-16 above, which came from runs that weren't kept.
 ### 2026-11-17: commit ids changed
 The commit messages were tidied before the repo was made public, which changed every commit id. No file, author
 or date changed. The ids cited in this repo, and in the names of results folders, are the current ones. A run's
-link to its code is the commit id in its folder name: the records themselves carry no commit and no date.
+link to its code is the commit id in its folder name: the records themselves carry no commit and no date. The
+folders for runs 1 to 6 have no commit id in their names. `results/README.md` says what is known about each.
 
 ### 2026-11-17: a last review before publication
 Three reviewers read the repo again. No request, label, prompt or score changed, and the code changes below were
@@ -263,3 +265,27 @@ checked to give the same answer as before on every word of every request in the 
 - **Approvals.** TR-05 said an approval counts only from the group's owner. The gateway checks the recorded
   approver against the owner, but the approval step records whoever the answer names. TR-05 now says that.
 - **Cost.** The README compared the two agents. The gap was the workflow's, so it now gives both comparisons.
+
+### 2026-11-17: a review by a second model
+`claude-opus-5-5` reviewed the repo from a fresh clone and scored all 20 results folders again from the records
+against the labels. Every published completion and wrong-grant count matched. No request, label, prompt, rule or
+score changed. What changed is wording, and one test:
+
+- **One request, not several.** Every guess that became a wrong grant on the validation set was the same request,
+  t-083: once in run 1 and five times in run 4. The README said "vague requests". It now names the request.
+- **Eight swapped asks, not two.** The README's opening said two test requests carried injected text. Eight did,
+  and the workflow on `claude-haiku-5-5` granted the swap on two of them.
+- **No test-set run without the rules.** The README now says that nothing here shows what the rules prevented on
+  the test set, and that the agent on Haiku avoided every wrong grant there by asking, which no rule made it do.
+- **About 24 times, not 20.** Sonnet's workflow cost $0.00418 a completed task in run 8 against Haiku's $0.00018
+  in run 7. The "20" came from dividing two rounded figures.
+- **The models weren't called the same way.** Haiku is forced to call a tool and Sonnet is asked to in the system
+  prompt. The README and ADR 0002 now say so.
+- **Repeats aren't independent.** The 95% ranges treat three repeats of a request as three separate trials. The
+  README now says the real ranges are wider, and gives wrong grants as requests as well as runs.
+- **"First-try tool-call success"** counts every well-formed call, retries included. The README's table now calls
+  it "well-formed tool calls". The reports keep the old label.
+- **The one-grant rule.** The records can't prove no arm tried a second grant, because they don't keep which rule
+  refused a call. The README and ADR 0004 now say what the records do show.
+- **A test that didn't test what it said.** In `tests/test_settle.py`, the refusal after a restart came from the
+  settle rule. The request now names both groups, and the test checks that the one-grant rule refused.

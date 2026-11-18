@@ -1,5 +1,6 @@
 # List prices per million tokens, in US dollars, for working out cost per completed task.
 # Source: https://platform.claude.com/docs/en/about-claude/pricing, read 2026-11-14.
+# Read again 2026-11-17: all four models unchanged.
 # These are the Anthropic API's base prices for prompts up to 100,000 tokens, with no caching.
 # What you pay can differ: a cloud platform or a US-only endpoint may add about 10%. Change them to match your bill.
 

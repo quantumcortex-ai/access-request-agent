@@ -289,3 +289,13 @@ score changed. What changed is wording, and one test:
   refused a call. The README and ADR 0004 now say what the records do show.
 - **A test that didn't test what it said.** In `tests/test_settle.py`, the refusal after a restart came from the
   settle rule. The request now names both groups, and the test checks that the one-grant rule refused.
+
+The reviewer listed four things it couldn't check. Two we then checked ourselves, and two stay open:
+
+- **The list prices.** Checked against the source page on 2026-11-17. All four match `tasks/prices.toml`.
+- **That the test-set writer never saw the repo.** Checked against the writing session's log, which shows two
+  shell commands, both in its working folder. `docs/test-set-brief.md` says so, and says the log is private.
+- **Which rule refused a call in a scored run.** Still open. The records keep that a call was refused and not
+  which rule refused it. Only a new run that records the rule can answer it.
+- **The commits behind runs 2 to 6.** Still open, and it will stay open. Those runs were scored from a working
+  tree before it was committed. `results/README.md` names the change each one measured.

@@ -13,6 +13,9 @@ What to know when reading it:
   directory, and fourteen development tasks for the record format (t-001, t-021, t-036, t-051, t-061, t-071,
   t-076, t-086, t-091, t-096, t-101, t-106, t-111 and t-116).
 - **What it didn't see.** The code, `policy/rules.toml`, the prompts, the ADRs or any result.
+- **How we know.** We read the writing session's log on 2026-11-17. It ran two shell commands, both inside the
+  working folder, and opened nothing else. The only mention of this repo anywhere in what it was given is the
+  brief's line telling it to stay out. The log is private, so this is our word and not something you can check.
 - **Names.** The set was called held-out when it was written, so the brief says "held-out", the category names
   carried a `heldout_` prefix and the ids start `h-`. The prefix was dropped from the category names in the
   rename recorded in `docs/eval-pass-criteria.md`. Nothing else in any request changed.

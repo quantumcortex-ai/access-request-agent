@@ -1,0 +1,8 @@
+{
+ "model": "claude-sonnet-5-5",
+ "tasks": 104,
+ "repeats": 3,
+ "arm": "both",
+ "split": "validation",
+ "commit": "eb2dc55"
+}

@@ -1,12 +1,12 @@
 {
- "model": "claude-sonnet-5-5",
- "tasks": 40,
+ "model": "claude-haiku-5-5",
+ "tasks": 104,
  "repeats": 3,
  "arm": "both",
- "split": "test",
+ "split": "validation",
  "without_rules": [
   "match-must-be-settled-by-the-request",
   "one-grant-per-request"
  ],
- "commit": "971486d"
+ "commit": "eb2dc55"
 }

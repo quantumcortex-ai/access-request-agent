@@ -156,7 +156,7 @@ reported as a measured limit. Otherwise this set stops being unseen the way the 
 
 What happened: on the validation set both models passed. On the test set `claude-sonnet-5-5` passed and
 `claude-haiku-5-5` failed: the workflow made six wrong grants, all on two requests that swap the ask. The numbers
-are in the README and the runs are in `results/2026-11-16-0b17231-*`. Neither arm was changed afterwards.
+are in the README and the runs are in `results/2026-11-16-48e5a16-*`. Neither arm was changed afterwards.
 
 ### 2026-11-16: labels point at requirements
 `docs/requirements.md` now states the business and technical requirements, and `tasks/label-rules.toml` names the
@@ -180,7 +180,7 @@ What was renamed, so the history can be followed:
   notes dated before the rename. Commits before this one show the old wording.
 - `--split test` used to run the 104 generated tasks. It now runs the test set, and `--split validation` runs the
   104.
-- The four results folders from commit `0b17231` moved: `-test` became `-validation` and `-held-out` became `-test`.
+- The four results folders from commit `48e5a16` moved: `-test` became `-validation` and `-held-out` became `-test`.
   The `split` value in each older run's `meta.json` changed from `test` to `validation`.
 - The test set's five category names lost their `heldout_` prefix, in the task file and in the run records. Every
   other field of every request is the same, byte for byte.
@@ -228,7 +228,7 @@ development tasks, and none in 12 runs an arm on the probes. The records are in 
   can be answered by a new process.
 
 What ran: the 104 validation tasks and the 40 test requests, three times each, on `claude-haiku-5-5` and
-`claude-sonnet-5-5`, at commit `b817e83`. The validation runs are runs 9 and 10.
+`claude-sonnet-5-5`, at commit `3a1c2f1`. The validation runs are runs 9 and 10.
 
 What this costs the test set: the arms have now run on it twice. Neither fix was made because of a test result,
 and no request or label changed. The first run stays in the README beside the second.
@@ -238,7 +238,7 @@ Haiku failed, with the same six wrong grants by the workflow on the same two req
 runs either way, and the README gives both sets of numbers.
 
 Also measured here, on `claude-haiku-5-5`: the development set's finance reports request (t-081), 16 times an arm,
-at the commit before the hand-back fix (`9dec77f`) and at the commit with it (`0b17231`). The agent completed it 1
+at the commit before the hand-back fix (`bf87eac`) and at the commit with it (`48e5a16`). The agent completed it 1
 time in 16 before and 9 in 16 after. The workflow completed it 16 in 16 both times. These replace the counts in the
 note of 2026-11-16 above, which came from runs that weren't kept.
 
@@ -311,7 +311,7 @@ with a refusal another rule would have made too, because the policy names the fi
 with the rule left out is the check on that.
 
 ### 2026-11-17: three runs on `claude-haiku-5-5` with refusals recorded
-All three ran at `971486d`, the commit above. No arm, prompt, rule, request or label changed before or after them.
+All three ran at `eb2dc55`, the commit above. No arm, prompt, rule, request or label changed before or after them.
 The test set has now been run three times, and once more with two rules left out.
 
 | Run | Workflow | Agent | Wrong grants |
@@ -347,7 +347,7 @@ nine completions, all on the finance reports request. That is one model, three r
 the rules. It doesn't undo runs 4 and 5, where the settle rule took wrong grants on t-083 from five to none.
 
 ### 2026-11-17: four more runs at the same commit
-Also at `971486d`, with nothing changed: the test set on `claude-sonnet-5-5` with every rule on and with the two
+Also at `eb2dc55`, with nothing changed: the test set on `claude-sonnet-5-5` with every rule on and with the two
 rules left out, the validation set on Sonnet, and the validation set on `claude-haiku-5-5` with the two rules
 left out. The seven runs at this commit cost $17.12 at list price.
 
@@ -381,7 +381,7 @@ compare a refusal in code with the same check left to the model. On these two se
 never acted on a guess, and the refusal added eleven misses and stopped nothing.
 
 That doesn't show the refusal is never needed. Run 4 left the settle rule out at an earlier commit and got five
-wrong grants on t-083. The instructions were made plainer after that, in `640a334`. These are three repeats of 144
+wrong grants on t-083. The instructions were made plainer after that, in `eebfa4b`. These are three repeats of 144
 requests, and a model that doesn't guess in 1,104 runs can still guess in the next one.
 
 ### 2026-11-18: corrections from a cold read
@@ -406,7 +406,7 @@ prompt or score changed.
 - **Plainer instructions explain the agent, not the workflow.** The workflow's prompt and its input on t-083 were
   the same from run 4 on. The model picked a group in 6 of 9 runs in runs 4 to 6 and in none of 12 from run 7.
   Nothing in the code explains that.
-- **`971486d` changed more than the records.** It carries `ae09b6d`, which changed two things in the gateway:
+- **`eb2dc55` changed more than the records.** It carries `af7ad7e`, which changed two things in the gateway:
   which characters end a word, and reading saved state again at each decision. The first gives the same answer on
   all 174 requests in the three sets and the probes. The second changes nothing within one run.
 - **Earlier reports.** The note of 2026-11-17 says earlier runs' reports read "Not recorded in this run." The
@@ -414,3 +414,10 @@ prompt or score changed.
 - **Which rule refused a call** was listed as still open on 2026-11-17. The two notes after it answer it.
 - **The settle rule's word gap** is wider than ADR 0003 said. ADR 0003 has a correction, and the README lists it
   under "Known gaps".
+
+### 2026-11-18: commit ids changed again
+Before the repo was made public, the licence file in every earlier commit was replaced with CC BY 4.0, the licence
+the repo uses now. The licence line in `pyproject.toml`, the README's licence line and three commit messages were
+changed to match. No other file, author or date changed, and the latest commit's files are the same as before.
+Every commit id changed. The ids cited in this repo, in the names of results folders and in each run's
+`meta.json` are the new ones.

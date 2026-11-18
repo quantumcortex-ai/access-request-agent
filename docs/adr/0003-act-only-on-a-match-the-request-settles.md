@@ -62,7 +62,7 @@ Two fixes from a review of the code, scored as runs 9 and 10.
 - With no request given, nothing is saved.
 
 ## Noted 2026-11-17, after runs with the refusing rule recorded
-At `971486d` the records keep which rule refused a call. Over 1,728 runs with every rule on, on both models and
+At `eb2dc55` the records keep which rule refused a call. Over 1,728 runs with every rule on, on both models and
 both sets, this rule refused 19 calls. Every one named the request's own person and group on a request that
 should be granted, and eleven of those runs didn't complete, all on the two requests for the finance reports.
 With this rule and the one-grant rule left out, in 1,104 runs, no arm acted on a guess. Leaving the rule out

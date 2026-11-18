@@ -104,10 +104,10 @@ The evidence is narrower than the conclusion, and we'd rather say so here than f
     three times each, so 312 runs an arm. Three changes were made because of its results, so it is no longer
     unseen. The timeline is under the table of runs.
   - **Test, 40 requests:** three times each, so 120 runs an arm. Nothing is tuned against it. The arms have run
-    on it three times with every rule on: at commit `0b17231`, at `b817e83` after two code fixes that came from a
-    code review and not from a test result, and at `971486d`. That last commit records more about each run, and
+    on it three times with every rule on: at commit `48e5a16`, at `3a1c2f1` after two code fixes that came from a
+    code review and not from a test result, and at `eb2dc55`. That last commit records more about each run, and
     carries two small changes to the gateway that give the same answers on every request in the three sets. At
-    `971486d` the arms also ran on it once with the two added rules left out.
+    `eb2dc55` the arms also ran on it once with the two added rules left out.
 - **How the test set was written:** a separate model session wrote the requests and the labels from a brief, a
   listing of the directory and fourteen development tasks for the format. The brief is in
   [`docs/test-set-brief.md`](docs/test-set-brief.md). It states the policy a careful person follows and names the
@@ -140,40 +140,40 @@ What changed between runs:
 | 4. Haiku, settle rule left out | 306 of 312 | 310 of 312 | agent 6, workflow 2 | Fails |
 | 5. Haiku, settle rule on | 309 of 312 | 310 of 312 | agent 3 | Fails |
 | 6. Haiku, settle rule and one-grant rule, 2026-11-16 | 311 of 312 | 311 of 312 | 0 | Passes |
-| 7. Haiku, with the hand-back fix, commit `0b17231` | 312 of 312 | 310 of 312 | 0 | Passes |
+| 7. Haiku, with the hand-back fix, commit `48e5a16` | 312 of 312 | 310 of 312 | 0 | Passes |
 | 8. Sonnet, same commit as run 7 | 312 of 312 | 312 of 312 | 0 | Passes |
-| 9. Haiku, whole-word matching and saved request state, commit `b817e83` | 312 of 312 | 309 of 312 | 0 | Passes |
+| 9. Haiku, whole-word matching and saved request state, commit `3a1c2f1` | 312 of 312 | 309 of 312 | 0 | Passes |
 | 10. Sonnet, same commit as run 9 | 312 of 312 | 312 of 312 | 0 | Passes |
-| 11. Haiku, records keep the refusing rule, commit `971486d`, 2026-11-17 | 312 of 312 | 309 of 312 | 0 | Passes |
+| 11. Haiku, records keep the refusing rule, commit `eb2dc55`, 2026-11-17 | 312 of 312 | 309 of 312 | 0 | Passes |
 | 12. Sonnet, same commit as run 11 | 312 of 312 | 312 of 312 | 0 | Passes |
 
 One more pass isn't numbered. It was added after run 12 as a comparison, to measure the two added rules. At
-`971486d`, Haiku with the settle rule and the one-grant rule left out completed 312 of 312 in both arms, with no
+`eb2dc55`, Haiku with the settle rule and the one-grant rule left out completed 312 of 312 in both arms, with no
 wrong grant.
 
 ### The test set, three times
 
 | Commit | Model | Agent completed | Workflow completed | Wrong grants | Pass rule |
 |---|---|---|---|---|---|
-| `0b17231` | Haiku | 112 of 120 | 108 of 120 | workflow 6 | Fails |
-| `0b17231` | Sonnet | 117 of 120 | 117 of 120 | 0 | Passes |
-| `b817e83` | Haiku | 110 of 120 | 108 of 120 | workflow 6 | Fails |
-| `b817e83` | Sonnet | 117 of 120 | 116 of 120 | 0 | Passes |
-| `971486d` | Haiku | 111 of 120 | 108 of 120 | workflow 6 | Fails |
-| `971486d` | Sonnet | 117 of 120 | 117 of 120 | 0 | Passes |
+| `48e5a16` | Haiku | 112 of 120 | 108 of 120 | workflow 6 | Fails |
+| `48e5a16` | Sonnet | 117 of 120 | 117 of 120 | 0 | Passes |
+| `3a1c2f1` | Haiku | 110 of 120 | 108 of 120 | workflow 6 | Fails |
+| `3a1c2f1` | Sonnet | 117 of 120 | 116 of 120 | 0 | Passes |
+| `eb2dc55` | Haiku | 111 of 120 | 108 of 120 | workflow 6 | Fails |
+| `eb2dc55` | Sonnet | 117 of 120 | 117 of 120 | 0 | Passes |
 
-And once at `971486d` with the settle rule and the one-grant rule left out:
+And once at `eb2dc55` with the settle rule and the one-grant rule left out:
 
 | Commit | Model | Agent completed | Workflow completed | Wrong grants | Pass rule |
 |---|---|---|---|---|---|
-| `971486d`, two rules left out | Haiku | 113 of 120 | 110 of 120 | workflow 6 | Fails |
-| `971486d`, two rules left out | Sonnet | 120 of 120 | 117 of 120 | 0 | Passes |
+| `eb2dc55`, two rules left out | Haiku | 113 of 120 | 110 of 120 | workflow 6 | Fails |
+| `eb2dc55`, two rules left out | Sonnet | 120 of 120 | 117 of 120 | 0 | Passes |
 
-Commit `b817e83` has two fixes from a review of the code: a search word must appear in the request as a word of
+Commit `3a1c2f1` has two fixes from a review of the code: a search word must appear in the request as a word of
 its own, and the gateway's memory of a request is saved. Neither was made in response to a test result, and
 neither moved the wrong grants.
 
-By kind of request at `0b17231`, completed runs out of the runs of that kind:
+By kind of request at `48e5a16`, completed runs out of the runs of that kind:
 
 | Kind | Haiku agent | Haiku workflow | Sonnet agent | Sonnet workflow |
 |---|---|---|---|---|
@@ -183,7 +183,7 @@ By kind of request at `0b17231`, completed runs out of the runs of that kind:
 | Groups with close names | 21 of 24 | 21 of 24 | 21 of 24 | 21 of 24 |
 | Claimed approvals, exceptions and emergencies | 18 of 18 | 18 of 18 | 18 of 18 | 18 of 18 |
 
-The same at `b817e83`:
+The same at `3a1c2f1`:
 
 | Kind | Haiku agent | Haiku workflow | Sonnet agent | Sonnet workflow |
 |---|---|---|---|---|
@@ -193,7 +193,7 @@ The same at `b817e83`:
 | Groups with close names | 21 of 24 | 21 of 24 | 21 of 24 | 21 of 24 |
 | Claimed approvals, exceptions and emergencies | 18 of 18 | 18 of 18 | 18 of 18 | 18 of 18 |
 
-At `971486d` with every rule on, one cell differs from the first table: the Haiku agent completed 18 of 24
+At `eb2dc55` with every rule on, one cell differs from the first table: the Haiku agent completed 18 of 24
 swapped asks. With the two rules left out:
 
 - **Groups with close names** went from 21 of 24 to 24 of 24 for both Haiku arms and for the Sonnet agent. The
@@ -252,7 +252,7 @@ would have failed where the code held, because neither arm was asked to judge th
 **From run 7 on, no scored run shows either added rule stopping a wrong grant.**
 
 - **No scored run shows the one-grant rule refusing a call.** From run 6 on, and on ten test requests that
-  try to add a second group or person, the records show no second grant. From `971486d` the records keep which
+  try to add a second group or person, the records show no second grant. From `eb2dc55` the records keep which
   rule refused a call, and in 1,728 runs there, counting both arms, it refused nothing. In the development
   probes, run 6's change took the agent from 7 wrong grants in 12 runs to none, and the rule refused nothing
   there either: the plainer instructions did that. Only the unit tests exercise the rule itself.
@@ -260,7 +260,7 @@ would have failed where the code held, because neither arm was asked to judge th
   and on `t-083` it gave the model the same input from run 4 to the latest run. In runs 4 to 6 the model picked a
   group on that request in 6 of 9 runs, and the confidence it stated was 55. From run 7 it picked none in 12, and
   stated 45. The model behind the same name answered differently.
-- **At `971486d` the settle rule refused only right answers.** It refused 19 calls in those 1,728 runs. Every one
+- **At `eb2dc55` the settle rule refused only right answers.** It refused 19 calls in those 1,728 runs. Every one
   named the request's own person and group, on a request that should be granted. Eleven runs that drew a
   refusal didn't complete, all on the two requests for the finance reports. In the other seven the agent
   searched again and completed.
@@ -303,10 +303,10 @@ The rules are in [`policy/rules.toml`](policy/rules.toml).
 - **The agent on Haiku made no wrong grant.** It saw both swaps and asked the requester which was meant, in five
   runs. A careful person would have done the original ask in two of them and denied it in three, because the
   person asked for is inactive. All five count as misses.
-- **The second pass over the test set gave the same result.** At `b817e83` the workflow on Haiku made the same
+- **The second pass over the test set gave the same result.** At `3a1c2f1` the workflow on Haiku made the same
   six wrong grants on the same two requests. The agent again made none. It asked which was meant in seven runs,
   across three of the swapped-ask requests.
-- **So did the third pass, and so did the pass with the two rules left out.** At `971486d` the same six wrong grants
+- **So did the third pass, and so did the pass with the two rules left out.** At `eb2dc55` the same six wrong grants
   came from the same two requests both times. Leaving the rules out added none.
 - **We haven't fixed this, on purpose.** Changing the arms against a test result would spend the set the way the
   validation set was spent. It's a measured limit, and it's first under "Known gaps" below.
@@ -326,7 +326,7 @@ The rules are in [`policy/rules.toml`](policy/rules.toml).
   forced tool call, so it gets a sentence in the system prompt asking for one. The model comparison carries that
   difference.
 - **The cheap agent also made no wrong grant once both rules were in.** The Haiku agent, at $0.0013, made none
-  from run 6 on, on either set, or with the two rules left out at `971486d`. It sent the swapped asks back to the
+  from run 6 on, on either set, or with the two rules left out at `eb2dc55`. It sent the swapped asks back to the
   requester where Sonnet completed them.
 - **No guarantee:** 1,296 runs an arm (runs 8, 10 and 12 and the test set three times) without a wrong grant
   doesn't show that it can't make one. Those are 144 different requests, each run nine times. Where a rule
@@ -334,7 +334,7 @@ The rules are in [`policy/rules.toml`](policy/rules.toml).
 
 ### What the two arms cost
 
-Run 7, on `claude-haiku-5-5`, at commit `0b17231`:
+Run 7, on `claude-haiku-5-5`, at commit `48e5a16`:
 
 | | Agent | Workflow |
 |---|---|---|
@@ -360,7 +360,7 @@ tool-call success", which claims more than it counts.
   - On the test set with every rule on, neither arm on either model completed a request for the finance reports,
     "view only". The group's record says "read", and the request never does. On each of the three commits, one
     of the Haiku agent's three runs of it ran out of steps.
-  - At `971486d` the records name the rule. It refused the right group in eleven of the runs that didn't
+  - At `eb2dc55` the records name the rule. It refused the right group in eleven of the runs that didn't
     complete these two requests. The Sonnet workflow, and the Sonnet agent once, sent the request back without
     being refused. With the two rules left out, both Haiku arms and the Sonnet agent completed them every time.
 - **A fix for that hand-back worked on the wording it was made on, and not beyond.** It was made on the development
@@ -387,7 +387,7 @@ run that went wrong.
   we won't claim" in `docs/eval-pass-criteria.md`.
 - **That the rules end wrong grants.** The test set shows one kind they miss, and the gaps we know of are listed
   under "Known gaps" below.
-- **That the two added rules are needed, or that they aren't.** With both left out at `971486d`, nothing new got
+- **That the two added rules are needed, or that they aren't.** With both left out at `eb2dc55`, nothing new got
   through in 1,104 runs: 144 requests on Haiku and 40 on Sonnet, three times each, on instructions written to work
   with the rules. An earlier commit made five wrong grants without the settle rule. We didn't run Sonnet on the
   validation set with the rules left out.

@@ -38,6 +38,17 @@ DEFAULT_MAX_COST = 1.00
 COST_MARGIN = 1.25
 
 
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def shown(path: Path) -> str:
+    """A folder as the report names it: relative to the repo, or by its name alone, never a local absolute path."""
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return path.name
+
+
 def asked_pairs() -> dict[str, list[str | None]]:
     """The user and group each request asked for, from every task file. None where the request didn't settle one."""
     pairs = {}
@@ -107,7 +118,7 @@ def decide(base_dir: Path, cand_dir: Path) -> tuple[int, dict[str, Any]]:
     """Score cand_dir against base_dir. Returns the exit code and everything the report shows."""
     for folder in (base_dir, cand_dir):
         if not (folder / "meta.json").exists():
-            return NO_RESULT, {"reasons": [f"{folder} has no meta.json"], "baseline": str(base_dir)}
+            return NO_RESULT, {"reasons": [f"{shown(folder)} has no meta.json"], "baseline": shown(base_dir)}
     base_meta = json.loads((base_dir / "meta.json").read_text())
     cand_meta = json.loads((cand_dir / "meta.json").read_text())
     base, cand = ev.load_records(base_dir), ev.load_records(cand_dir)
@@ -115,8 +126,8 @@ def decide(base_dir: Path, cand_dir: Path) -> tuple[int, dict[str, Any]]:
     expected_runs = cand_meta.get("tasks", 0) * cand_meta.get("repeats", 0) * len(arms)
 
     result: dict[str, Any] = {
-        "baseline": str(base_dir),
-        "run": str(cand_dir),
+        "baseline": shown(base_dir),
+        "run": shown(cand_dir),
         "meta": {"baseline": base_meta, "run": cand_meta},
         "same_prompts": _same(base_meta, cand_meta, "prompts_hash"),
         "same_rules": _same(base_meta, cand_meta, "rules_hash"),

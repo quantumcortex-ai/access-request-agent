@@ -113,6 +113,9 @@ def test_the_gate_writes_its_report_into_the_run_folder(runs):
     assert gate.main([str(good), "--baseline", str(base)]) == gate.PASS
     assert json.loads((good / "gate.json").read_text())["exit"] == gate.PASS
     assert (good / "gate.md").read_text().startswith("# Release gate: exit 0")
+    # The report never carries a local absolute path.
+    assert json.loads((good / "gate.json").read_text())["run"] == "good"
+    assert str(good.parent) not in (good / "gate.md").read_text()
 
 
 def test_a_dirty_run_gives_no_result(runs, monkeypatch):

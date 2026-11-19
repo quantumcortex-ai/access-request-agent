@@ -14,6 +14,7 @@ What each number means is fixed in docs/eval-pass-criteria.md.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import subprocess
@@ -29,8 +30,8 @@ from . import agent, workflow
 from .approval import Approver, run
 from .directory import Directory
 from .gateway import Gateway
-from .llm import ClaudeModel, Model
-from .policy import load_rules
+from .llm import ClaudeModel, Model, provider
+from .policy import DEFAULT_RULES, load_rules
 from .seed import seed
 from .tasks import TASKS_FILE, TEST_FILE, Task, load_tasks
 
@@ -110,6 +111,30 @@ def code_version() -> str | None:
     except (OSError, subprocess.CalledProcessError):
         return None
     return f"{head}-dirty" if changed else head
+
+
+def _digest(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()[:16]
+
+
+def fingerprint() -> dict[str, str]:
+    """Hashes of what a change to an arm would touch: the prompts with the tool schemas, and the policy rules.
+
+    Commit ids change when history is rewritten. These don't, so a reverted change can be checked against the
+    last passing run with no model call.
+    """
+    prompts = {
+        "agent.SYSTEM": agent.SYSTEM,
+        "agent.TOOLS": agent.TOOLS,
+        "workflow.EXTRACT_SYSTEM": workflow.EXTRACT_SYSTEM,
+        "workflow.EXTRACT_TOOL": workflow.EXTRACT_TOOL,
+        "workflow.CHOOSE_SYSTEM": workflow.CHOOSE_SYSTEM,
+        "workflow.CHOOSE_TOOL": workflow.CHOOSE_TOOL,
+    }
+    return {
+        "prompts_hash": _digest(json.dumps(prompts, sort_keys=True).encode()),
+        "rules_hash": _digest(DEFAULT_RULES.read_bytes()),
+    }
 
 
 def run_one(
@@ -366,6 +391,64 @@ def run_eval(
     return records
 
 
+def execute(
+    *,
+    split: str = "validation",
+    arm: str = "both",
+    repeats: int = 1,
+    limit: int | None = None,
+    tasks_path: Path | None = None,
+    run_id: str | None = None,
+    without_rules: tuple[str, ...] = (),
+    model: Model | None = None,
+) -> Path:
+    """Run the set and write the run's folder: meta.json, records.jsonl and report.md. Returns the folder."""
+    path = tasks_path or (TEST_FILE if split == "test" else TASKS_FILE)
+    tasks = [t for t in load_tasks(path) if split in ("all", t.split)]
+    if not tasks:
+        raise SystemExit(f"No tasks in {path} for --split {split}. Nothing was run.")
+    if limit:
+        # Every nth task, so a short run still covers each kind of case.
+        step = max(1, len(tasks) // limit)
+        tasks = tasks[::step][:limit]
+    known = {rule.id for rule in load_rules()}
+    unknown = [rule_id for rule_id in without_rules if rule_id not in known]
+    if unknown:
+        raise SystemExit(f"No rule named {', '.join(unknown)} in policy/rules.toml.")
+    if model is None:
+        try:
+            model = ClaudeModel()
+        except RuntimeError as exc:
+            # No key and no Foundry resource: say what to set, without a traceback.
+            raise SystemExit(str(exc)) from None
+    run_dir = RUNS_DIR / (run_id or uuid.uuid4().hex[:8])
+    run_dir.mkdir(parents=True, exist_ok=True)
+    meta_path = run_dir / "meta.json"
+    earlier = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    meta: dict[str, Any] = {"model": model.name, "tasks": len(tasks), "repeats": repeats, "arm": arm, "split": split}
+    if without_rules:
+        meta["without_rules"] = sorted(without_rules)
+    commit = code_version()
+    if commit:
+        meta["commit"] = commit
+    meta |= fingerprint()
+    meta["provider"] = provider() if isinstance(model, ClaudeModel) else "scripted"
+    meta_path.write_text(json.dumps(meta, indent=1))
+    arms = ["workflow", "agent"] if arm == "both" else [arm]
+
+    records = run_eval(tasks, arms, repeats, model, run_dir, without_rules=tuple(without_rules))
+    # The model ids that answered are known only once the run has made its calls. A continued run keeps the
+    # ids from before.
+    returned = set(earlier.get("returned_models", [])) | set(getattr(model, "returned", set()))
+    if returned:
+        meta["returned_models"] = sorted(returned)
+        meta_path.write_text(json.dumps(meta, indent=1))
+    report = render(summarize(records, model.name), model.name)
+    (run_dir / "report.md").write_text(report + "\n")
+    print(f"\n{report}\n\nSaved to {run_dir}")
+    return run_dir
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--arm", choices=["workflow", "agent", "both"], default="both")
@@ -396,38 +479,15 @@ def main() -> None:
         print(render(summarize(load_records(args.report), meta["model"]), meta["model"]))
         return
 
-    path = args.tasks or (TEST_FILE if args.split == "test" else TASKS_FILE)
-    tasks = [t for t in load_tasks(path) if args.split in ("all", t.split)]
-    if not tasks:
-        raise SystemExit(f"No tasks in {path} for --split {args.split}. Nothing was run.")
-    if args.limit:
-        # Every nth task, so a short run still covers each kind of case.
-        step = max(1, len(tasks) // args.limit)
-        tasks = tasks[::step][: args.limit]
-    try:
-        model = ClaudeModel()
-    except RuntimeError as exc:
-        # No key and no Foundry resource: say what to set, without a traceback.
-        raise SystemExit(str(exc)) from None
-    run_dir = RUNS_DIR / (args.run_id or uuid.uuid4().hex[:8])
-    run_dir.mkdir(parents=True, exist_ok=True)
-    known = {rule.id for rule in load_rules()}
-    unknown = [rule_id for rule_id in args.without_rule if rule_id not in known]
-    if unknown:
-        raise SystemExit(f"No rule named {', '.join(unknown)} in policy/rules.toml.")
-    meta = {"model": model.name, "tasks": len(tasks), "repeats": args.repeats, "arm": args.arm, "split": args.split}
-    if args.without_rule:
-        meta["without_rules"] = sorted(args.without_rule)
-    commit = code_version()
-    if commit:
-        meta["commit"] = commit
-    (run_dir / "meta.json").write_text(json.dumps(meta, indent=1))
-    arms = ["workflow", "agent"] if args.arm == "both" else [args.arm]
-
-    records = run_eval(tasks, arms, args.repeats, model, run_dir, without_rules=tuple(args.without_rule))
-    report = render(summarize(records, model.name), model.name)
-    (run_dir / "report.md").write_text(report + "\n")
-    print(f"\n{report}\n\nSaved to {run_dir}")
+    execute(
+        split=args.split,
+        arm=args.arm,
+        repeats=args.repeats,
+        limit=args.limit,
+        tasks_path=args.tasks,
+        run_id=args.run_id,
+        without_rules=tuple(args.without_rule),
+    )
 
 
 if __name__ == "__main__":

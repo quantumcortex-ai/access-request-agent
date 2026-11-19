@@ -459,8 +459,9 @@ the committed records. No model was called for this.
 - **Neither recorded signal tells the needless ones apart.** A lookup returned more than one match in all 15
   finance-reports runs, and in 241 runs that ended correctly. The confidence stated on those 15 ran from 40 to 85.
 
-So a question to the requester, the planned next step for Reasoning, could win back at most the finance-reports runs: two
-requests, 15 runs in 1,080.
+So a question to the requester could win back at most the finance-reports runs: two requests, 15 runs in 1,080. We
+decided on 2026-11-18 not to build it here. It would cost $20 to $45 in runs and 90 new requests to measure it
+properly, for a gain that small. Both designs already send back every request they should.
 
 ### What this doesn't show
 
@@ -558,8 +559,8 @@ handled real requests.
   test that on new practice requests.
 - **The settle rule refuses some right answers.** At the latest commit it cost eleven completions on the two
   finance reports requests. A person reads "view only, so not the editors group" easily, and no search of the
-  request's words settles the right group. Next: ask the requester one question and act on the answer, which is
-  the planned Reasoning experiment below.
+  request's words settles the right group. Next: ask the requester one question and act on the answer. We measured
+  what that could win back and didn't build it here (see "When each arm hands a request back").
 - **The model's behaviour can change under the same name.** The workflow stopped guessing on `t-083` from run 7,
   on the same input. Next: pin the exact model version where the provider offers one, and run the eval before any
   change ships. The release gate above does that last part, when a person starts it.
@@ -637,7 +638,7 @@ The tests use a scripted stand-in for the model, so they need no API key.
 pytest -q
 ```
 
-## What's built and what's planned
+## What's built
 
 One measured experiment in each of the series' five layers. Everything here runs locally.
 
@@ -647,7 +648,7 @@ One measured experiment in each of the series' five layers. Everything here runs
 | Governance | Rules as code, checked on every call, and an audit log | Built |
 | Economics | Cost per completed task, two arms, two models | Built |
 | Operations | A release gate that runs the eval, tried on a past bad change | Built |
-| Reasoning | When each arm hands a request back, and to whom | Measured. Next, planned: one question to the requester in place of a hand-back |
+| Reasoning | When each arm hands a request back, and to whom | Measured. One question to the requester in place of a hand-back: not built, because at most 15 runs in 1,080 could gain |
 
 Not shown, because the task is too short: planning over many steps, memory and retrieval. Not shown, because it
 runs locally: running it in production, with the agent's own identity, traces and gradual rollouts.

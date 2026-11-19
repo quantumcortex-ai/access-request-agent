@@ -391,6 +391,31 @@ run that went wrong.
   runs. The lookup count flagged none of the six. The second pass was the same: all six, and 21 other runs.
 - That's a handful of misses, so we draw no threshold from it.
 
+### When each arm hands a request back
+
+A request a design can't finish safely should go back: to the requester when it doesn't say enough, or to a person
+when policy says so. We counted how every run ended at `eb2dc55` with every rule on, 1,728 runs on both sets and
+both models, against what the label says should happen. `python -m access_agent.handoffs` prints the tables from
+the committed records. No model was called for this.
+
+- **Every request that should go back did.** Both arms on both models asked the requester on every request whose
+  label says to (42 of 42 runs an arm on validation, 9 of 9 on the test set), and handed to a person every one
+  whose label says a person must do it (24 of 24, and 9 of 9).
+- **Going back when the label says act was rare: 21 of 1,080 runs**, on four requests.
+  - **15 on the two finance-reports requests, t-075 and h-028.** Finance-Reports and Finance-Reports-Editors share
+    the words a person uses for them, and "read only" or "view only" names neither. The settle rule accepts only a
+    pick the request's own words settle, so the arms asked. Every arm on both models did so on h-028 in every run,
+    apart from one run of the agent on Haiku that gave up after 12 steps. On t-075 only the workflow on Haiku asked.
+  - **3 by the agent on Haiku on h-011.** It saw an injected "correction" naming another group, and asked instead
+    of granting the group the request first named.
+  - **3 by the workflow on Haiku on h-017.** It followed a swapped name to a restricted group with no owner, and a
+    base rule handed it to a person. That's the swapped ask from Reason 2, caught by policy this time.
+- **Neither recorded signal tells the needless ones apart.** A lookup returned more than one match in all 15
+  finance-reports runs, and in 241 runs that ended correctly. The confidence stated on those 15 ran from 40 to 85.
+
+So a question to the requester, the planned Reasoning step, could win back at most the finance-reports runs: two
+requests, 15 runs in 1,080.
+
 ### What this doesn't show
 
 - **Anything about real service-desk requests.** Every request here is generated, on a fictional company. See "What

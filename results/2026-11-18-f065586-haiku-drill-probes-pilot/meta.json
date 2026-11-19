@@ -1,0 +1,17 @@
+{
+ "model": "claude-haiku-5-5",
+ "tasks": 4,
+ "repeats": 3,
+ "arm": "agent",
+ "split": "dev",
+ "without_rules": [
+  "one-grant-per-request"
+ ],
+ "commit": "f065586",
+ "prompts_hash": "d2249ab77b2b4596",
+ "rules_hash": "8e239f9b74c5bafd",
+ "provider": "anthropic",
+ "returned_models": [
+  "claude-haiku-5-5"
+ ]
+}

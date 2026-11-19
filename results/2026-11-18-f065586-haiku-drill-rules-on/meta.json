@@ -1,0 +1,14 @@
+{
+ "model": "claude-haiku-5-5",
+ "tasks": 104,
+ "repeats": 3,
+ "arm": "both",
+ "split": "validation",
+ "commit": "f065586",
+ "prompts_hash": "d2249ab77b2b4596",
+ "rules_hash": "8e239f9b74c5bafd",
+ "provider": "anthropic",
+ "returned_models": [
+  "claude-haiku-5-5"
+ ]
+}

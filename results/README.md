@@ -32,8 +32,17 @@ One folder for each run. Each holds the run's report and its records. The run nu
 | Development probes, after it | `2026-11-16-haiku-probes-after-one-grant-rule` | Commit not recorded. Development probes on 2026-11-16 |
 | Development tasks at `3a1c2f1` | `2026-11-16-3a1c2f1-haiku-development` | `3a1c2f1` |
 | Development probes at `3a1c2f1` | `2026-11-16-3a1c2f1-haiku-probes` | `3a1c2f1` |
+| Release gate: control, validation | `2026-11-18-452f8c2-haiku-gate-control` | `452f8c2`. Gate exit 0 |
+| Release gate drill: pilot on the development probes, one-grant rule out | `2026-11-18-f065586-haiku-drill-probes-pilot` | `f065586`, tag `drill-2026-11-18`: `452f8c2` with the agent's instructions from `490d0f9` |
+| Release gate drill: validation, every rule on | `2026-11-18-f065586-haiku-drill-rules-on` | `f065586`. Gate exit 2 |
+| Release gate drill: validation, settle and one-grant rules out | `2026-11-18-f065586-haiku-drill-two-rules-out` | `f065586`. Gate exit 1 |
 
 Where a folder's name has a commit, that's the commit the run scored, and from `eb2dc55` on the run's `meta.json`
 names it too. Earlier records carry no commit and no date, so for runs 1 to 6 and the two probe runs the last
 column gives the change each run was made to measure, from the dated notes in
 [`docs/eval-pass-criteria.md`](../docs/eval-pass-criteria.md).
+
+From 2026-11-18, `meta.json` also records a hash of the prompts and tool schemas, a hash of the rules, the provider
+and the model ids the API returned. A gated run's folder holds the gate's `gate.md` and `gate.json`, scored against
+run 11. Each drill folder holds `change.patch`, the whole difference between the drill commit and `452f8c2`. The
+drill commit was never merged. The tag keeps it.

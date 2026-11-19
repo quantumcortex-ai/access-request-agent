@@ -1,0 +1,108 @@
+{
+ "exit": 2,
+ "baseline": "results/2026-11-17-eb2dc55-haiku-validation",
+ "run": "results/2026-11-18-f065586-haiku-drill-rules-on",
+ "meta": {
+  "baseline": {
+   "model": "claude-haiku-5-5",
+   "tasks": 104,
+   "repeats": 3,
+   "arm": "both",
+   "split": "validation",
+   "commit": "eb2dc55"
+  },
+  "run": {
+   "model": "claude-haiku-5-5",
+   "tasks": 104,
+   "repeats": 3,
+   "arm": "both",
+   "split": "validation",
+   "commit": "f065586",
+   "prompts_hash": "d2249ab77b2b4596",
+   "rules_hash": "8e239f9b74c5bafd",
+   "provider": "anthropic",
+   "returned_models": [
+    "claude-haiku-5-5"
+   ]
+  }
+ },
+ "same_prompts": null,
+ "same_rules": null,
+ "arms": {
+  "workflow": {
+   "wrong_grants": 0,
+   "wrong_grant_runs": [],
+   "unasked_refusals": [],
+   "baseline_unasked_refusals": 0,
+   "completed": [
+    311,
+    312
+   ],
+   "baseline_completed": [
+    309,
+    312
+   ],
+   "hand_backs": 67,
+   "baseline_hand_backs": 69,
+   "flipped": {
+    "lost": [],
+    "gained": []
+   },
+   "cost": 0.0535095,
+   "baseline_cost": 0.0540145
+  },
+  "agent": {
+   "wrong_grants": 0,
+   "wrong_grant_runs": [],
+   "unasked_refusals": [
+    {
+     "task_id": "t-123",
+     "repeat": 1,
+     "rule": "one-grant-per-request",
+     "tool": "add_to_group",
+     "pair": [
+      "u-00048",
+      "g-0002"
+     ]
+    },
+    {
+     "task_id": "t-123",
+     "repeat": 2,
+     "rule": "one-grant-per-request",
+     "tool": "add_to_group",
+     "pair": [
+      "u-00048",
+      "g-0002"
+     ]
+    },
+    {
+     "task_id": "t-123",
+     "repeat": 3,
+     "rule": "one-grant-per-request",
+     "tool": "add_to_group",
+     "pair": [
+      "u-00048",
+      "g-0002"
+     ]
+    }
+   ],
+   "baseline_unasked_refusals": 0,
+   "completed": [
+    312,
+    312
+   ],
+   "baseline_completed": [
+    312,
+    312
+   ],
+   "hand_backs": 66,
+   "baseline_hand_backs": 66,
+   "flipped": {
+    "lost": [],
+    "gained": []
+   },
+   "cost": 0.3743579,
+   "baseline_cost": 0.3964786
+  }
+ }
+}

@@ -111,10 +111,17 @@ def make_client() -> Any:
     return anthropic.AnthropicFoundry(resource=resource, azure_ad_token_provider=provider)
 
 
+def provider() -> str:
+    """Which service a run calls, by the same switch make_client uses."""
+    return "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "foundry"
+
+
 @dataclass
 class ClaudeModel:
     name: str = field(default_factory=lambda: os.getenv("ACCESS_AGENT_MODEL", DEFAULT_MODEL))
     client: Any = None
+    # The model ids the API said answered, which can differ from the name asked for.
+    returned: set[str] = field(default_factory=set)
 
     def __post_init__(self) -> None:
         if self.client is None:
@@ -141,6 +148,8 @@ class ClaudeModel:
             else:
                 kwargs["system"] = ask_for_tool(system, tool_choice)
         response = self._create(kwargs)
+        if getattr(response, "model", None):
+            self.returned.add(response.model)
         content = [block.model_dump(mode="json", exclude_none=True) for block in response.content]
         return Reply(
             content=[b for b in content if b.get("type") in KEPT_BLOCKS],

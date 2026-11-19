@@ -40,4 +40,6 @@ QuantumCortex.AI agentic engineering series.
   never a copy of a validation task.
 - `src/access_agent/eval.py`: runs the set and reports. Development tasks are for debugging. Never adjust an arm against a
   validation task or a test request.
+- `src/access_agent/gate.py`: the release gate (ADR 0005). It scores a run against a baseline and holds a change on
+  a wrong grant or on new refusals of a pair the request didn't ask for. Never point it at the test set.
 - `src/access_agent/llm.py`: the model client. Tests use `ScriptedModel`, never a live model.

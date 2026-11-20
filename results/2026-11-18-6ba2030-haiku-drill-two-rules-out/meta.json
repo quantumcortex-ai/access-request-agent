@@ -4,7 +4,11 @@
  "repeats": 3,
  "arm": "both",
  "split": "validation",
- "commit": "f065586",
+ "without_rules": [
+  "match-must-be-settled-by-the-request",
+  "one-grant-per-request"
+ ],
+ "commit": "6ba2030",
  "prompts_hash": "d2249ab77b2b4596",
  "rules_hash": "8e239f9b74c5bafd",
  "provider": "anthropic",

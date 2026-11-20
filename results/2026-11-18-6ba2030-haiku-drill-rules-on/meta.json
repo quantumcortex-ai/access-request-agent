@@ -4,8 +4,8 @@
  "repeats": 3,
  "arm": "both",
  "split": "validation",
- "commit": "452f8c2",
- "prompts_hash": "00908e55cb127a66",
+ "commit": "6ba2030",
+ "prompts_hash": "d2249ab77b2b4596",
  "rules_hash": "8e239f9b74c5bafd",
  "provider": "anthropic",
  "returned_models": [

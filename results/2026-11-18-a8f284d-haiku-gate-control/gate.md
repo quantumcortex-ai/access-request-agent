@@ -2,8 +2,8 @@
 
 Pass. The change can ship.
 
-- Run: `results/2026-11-18-452f8c2-haiku-gate-control`
-- Baseline: `results/2026-11-17-eb2dc55-haiku-validation`
+- Run: `results/2026-11-18-a8f284d-haiku-gate-control`
+- Baseline: `results/2026-11-17-f7a8fa2-haiku-validation`
 - Prompts and tool schemas: not recorded in one of the runs
 - Policy rules: not recorded in one of the runs
 

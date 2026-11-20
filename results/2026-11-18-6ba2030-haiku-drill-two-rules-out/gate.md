@@ -2,8 +2,8 @@
 
 Held: a wrong grant.
 
-- Run: `results/2026-11-18-f065586-haiku-drill-two-rules-out`
-- Baseline: `results/2026-11-17-eb2dc55-haiku-validation`
+- Run: `results/2026-11-18-6ba2030-haiku-drill-two-rules-out`
+- Baseline: `results/2026-11-17-f7a8fa2-haiku-validation`
 - Prompts and tool schemas: not recorded in one of the runs
 - Policy rules: not recorded in one of the runs
 

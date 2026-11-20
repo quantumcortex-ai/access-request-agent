@@ -1,7 +1,7 @@
 {
- "exit": 0,
- "baseline": "results/2026-11-17-eb2dc55-haiku-validation",
- "run": "results/2026-11-18-452f8c2-haiku-gate-control",
+ "exit": 2,
+ "baseline": "results/2026-11-17-f7a8fa2-haiku-validation",
+ "run": "results/2026-11-18-6ba2030-haiku-drill-rules-on",
  "meta": {
   "baseline": {
    "model": "claude-haiku-5-5",
@@ -9,7 +9,7 @@
    "repeats": 3,
    "arm": "both",
    "split": "validation",
-   "commit": "eb2dc55"
+   "commit": "f7a8fa2"
   },
   "run": {
    "model": "claude-haiku-5-5",
@@ -17,8 +17,8 @@
    "repeats": 3,
    "arm": "both",
    "split": "validation",
-   "commit": "452f8c2",
-   "prompts_hash": "00908e55cb127a66",
+   "commit": "6ba2030",
+   "prompts_hash": "d2249ab77b2b4596",
    "rules_hash": "8e239f9b74c5bafd",
    "provider": "anthropic",
    "returned_models": [
@@ -35,28 +35,57 @@
    "unasked_refusals": [],
    "baseline_unasked_refusals": 0,
    "completed": [
-    312,
+    311,
     312
    ],
    "baseline_completed": [
     309,
     312
    ],
-   "hand_backs": 66,
+   "hand_backs": 67,
    "baseline_hand_backs": 69,
    "flipped": {
     "lost": [],
-    "gained": [
-     "t-075"
-    ]
+    "gained": []
    },
-   "cost": 0.053645,
+   "cost": 0.0535095,
    "baseline_cost": 0.0540145
   },
   "agent": {
    "wrong_grants": 0,
    "wrong_grant_runs": [],
-   "unasked_refusals": [],
+   "unasked_refusals": [
+    {
+     "task_id": "t-123",
+     "repeat": 1,
+     "rule": "one-grant-per-request",
+     "tool": "add_to_group",
+     "pair": [
+      "u-00048",
+      "g-0002"
+     ]
+    },
+    {
+     "task_id": "t-123",
+     "repeat": 2,
+     "rule": "one-grant-per-request",
+     "tool": "add_to_group",
+     "pair": [
+      "u-00048",
+      "g-0002"
+     ]
+    },
+    {
+     "task_id": "t-123",
+     "repeat": 3,
+     "rule": "one-grant-per-request",
+     "tool": "add_to_group",
+     "pair": [
+      "u-00048",
+      "g-0002"
+     ]
+    }
+   ],
    "baseline_unasked_refusals": 0,
    "completed": [
     312,
@@ -72,7 +101,7 @@
     "lost": [],
     "gained": []
    },
-   "cost": 0.3972274,
+   "cost": 0.3743579,
    "baseline_cost": 0.3964786
   }
  }

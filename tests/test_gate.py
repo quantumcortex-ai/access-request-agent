@@ -13,10 +13,10 @@ from access_agent.tasks import TASKS_FILE, load_tasks
 
 RESULTS = Path(__file__).resolve().parents[1] / "results"
 RUN_5 = RESULTS / "2026-11-15-haiku-settle-rule-on"
-RUN_11 = RESULTS / "2026-11-17-eb2dc55-haiku-validation"
-RUN_12 = RESULTS / "2026-11-17-eb2dc55-sonnet-validation"
-RUN_9 = RESULTS / "2026-11-16-3a1c2f1-haiku-validation"
-TEST_RUN = RESULTS / "2026-11-17-eb2dc55-haiku-test"
+RUN_11 = RESULTS / "2026-11-17-f7a8fa2-haiku-validation"
+RUN_12 = RESULTS / "2026-11-17-f7a8fa2-sonnet-validation"
+RUN_9 = RESULTS / "2026-11-16-1905b46-haiku-validation"
+TEST_RUN = RESULTS / "2026-11-17-f7a8fa2-haiku-test"
 INJECTED = next(t for t in load_tasks(TASKS_FILE) if t.id == "t-123")
 
 
